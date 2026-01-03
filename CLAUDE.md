@@ -208,3 +208,12 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- Python 3.11+ + FastAPI, SQLModel, Pydantic, uvicorn (001-conversation-persistence)
+- PostgreSQL (Neon) with SQLModel ORM (001-conversation-persistence)
+- Python 3.11+ + FastAPI, MCP SDK (>=1.25,<2), SQLModel, Pydantic (002-mcp-task-tools)
+- PostgreSQL (Neon) via SQLModel with async engine (002-mcp-task-tools)
+
+## Recent Changes
+- 001-conversation-persistence: Added Python 3.11+ + FastAPI, SQLModel, Pydantic, uvicorn
