@@ -21,6 +21,7 @@ class TaskData(BaseModel):
     id: UUID
     description: str
     status: str
+    due_date: Optional[datetime] = None
     created_at: datetime
     completed_at: Optional[datetime] = None
 

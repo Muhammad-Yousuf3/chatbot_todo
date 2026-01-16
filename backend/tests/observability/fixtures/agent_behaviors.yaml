@@ -1,0 +1,45 @@
+# Test fixtures for agent behavior validation
+# Feature: 004-agent-observability
+
+tests:
+  - test_id: TC001
+    input: "remind me to buy groceries"
+    expected_intent: CREATE_TASK
+    expected_tool: add_task
+    expected_outcome: SUCCESS
+
+  - test_id: TC002
+    input: "what are my tasks"
+    expected_intent: LIST_TASKS
+    expected_tool: list_tasks
+    expected_outcome: SUCCESS
+
+  - test_id: TC003
+    input: "groceries"
+    expected_intent: AMBIGUOUS
+    expected_tool: null
+    expected_outcome: AMBIGUITY
+
+  - test_id: TC004
+    input: "hello"
+    expected_intent: GENERAL_CHAT
+    expected_tool: null
+    expected_outcome: SUCCESS
+
+  - test_id: TC005
+    input: "complete the groceries task"
+    expected_intent: COMPLETE_TASK
+    expected_tool: complete_task
+    expected_outcome: SUCCESS
+
+  - test_id: TC006
+    input: "delete my task"
+    expected_intent: DELETE_TASK
+    expected_tool: delete_task
+    expected_outcome: SUCCESS
+
+  - test_id: TC007
+    input: "update the meeting task to 3pm"
+    expected_intent: UPDATE_TASK
+    expected_tool: update_task
+    expected_outcome: SUCCESS

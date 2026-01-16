@@ -2,24 +2,25 @@
 ================================================================================
 SYNC IMPACT REPORT
 ================================================================================
-Version change: 0.0.0 → 1.0.0 (MAJOR: Initial ratification of project constitution)
+Version change: 1.0.0 → 1.1.0 (MINOR: Authentication technology update)
 
-Modified principles: N/A (initial creation)
+Modified principles: N/A
 
-Added sections:
-  - Core Principles (6 principles)
-  - Technical Constraints
-  - Development Workflow
-  - Governance
+Modified sections:
+  - Technical Constraints: Changed "Better Auth" to "JWT (python-jose)"
+    Reason: Better Auth is TypeScript-only, incompatible with Python/FastAPI backend
 
-Removed sections: N/A (initial creation)
+Added sections: N/A
+
+Removed sections: N/A
 
 Templates validated:
   ✅ .specify/templates/plan-template.md - Constitution Check section exists
   ✅ .specify/templates/spec-template.md - Requirements and success criteria aligned
   ✅ .specify/templates/tasks-template.md - Task categorization compatible
 
-Follow-up TODOs: None
+Follow-up TODOs:
+  - Implement JWT authentication per specs/007-jwt-authentication/
 
 ================================================================================
 -->
@@ -122,7 +123,7 @@ The following technical constraints MUST be followed for all implementations:
 | Backend Framework | FastAPI | All API endpoints |
 | Database ORM | SQLModel | All database models |
 | Database | PostgreSQL (Neon) | Production database |
-| Authentication | Better Auth | JWT-based authentication |
+| Authentication | JWT (python-jose) | HS256 signed tokens, stateless validation |
 | AI Orchestration | OpenAI Agents SDK | Agent implementation |
 | Tool Interface | Official MCP SDK | All tool definitions |
 | Frontend Chat UI | OpenAI ChatKit | User interface |
@@ -185,4 +186,4 @@ decisions MUST comply with these principles.
 - Complexity MUST be justified against Principle V (Simplicity)
 - Violations MUST be documented and resolved before merge
 
-**Version**: 1.0.0 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-02
+**Version**: 1.1.0 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-10

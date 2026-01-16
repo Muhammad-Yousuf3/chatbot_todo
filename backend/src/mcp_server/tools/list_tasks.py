@@ -4,24 +4,36 @@ This tool allows AI agents to retrieve all tasks belonging to an authenticated u
 Tasks are returned sorted by created_at descending (newest first).
 """
 
+from typing import Optional
+
 from mcp.server.fastmcp import Context
 from sqlalchemy import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from src.db.engine import get_engine
 from src.mcp_server.schemas import TaskData, ToolResult
 from src.mcp_server.server import AppContext, mcp
 from src.models.task import Task
 
 
+def _get_db_engine(ctx: Optional[Context]):
+    """Get database engine from context or fallback to global engine."""
+    if ctx is not None:
+        app_context: AppContext = ctx.request_context.lifespan_context
+        return app_context.engine
+    return get_engine()
+
+
 @mcp.tool()
 async def list_tasks(
     user_id: str,
-    ctx: Context,
+    ctx: Optional[Context] = None,
 ) -> ToolResult:
     """Retrieve all tasks for the specified user.
 
     Args:
         user_id: The authenticated user's ID (externally provided)
+        ctx: MCP context (optional, uses global engine if not provided)
 
     Returns:
         ToolResult with list of tasks sorted by created_at descending,
@@ -36,9 +48,8 @@ async def list_tasks(
         )
 
     try:
-        # Get engine from context
-        app_context: AppContext = ctx.request_context.lifespan_context
-        engine = app_context.engine
+        # Get engine from context or fallback
+        engine = _get_db_engine(ctx)
 
         # Query tasks for user, sorted by created_at descending
         async with AsyncSession(engine) as session:
@@ -56,6 +67,7 @@ async def list_tasks(
                     id=task.id,
                     description=task.description,
                     status=task.status.value,
+                    due_date=task.due_date,
                     created_at=task.created_at,
                     completed_at=task.completed_at,
                 )

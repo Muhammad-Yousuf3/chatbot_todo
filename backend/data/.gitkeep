@@ -1,0 +1,2 @@
+# Data directory for SQLite log database (logs.db)
+# This file ensures the directory is tracked by git while ignoring actual database files

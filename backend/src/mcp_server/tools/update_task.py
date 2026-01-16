@@ -4,15 +4,25 @@ This tool allows AI agents to modify the description of existing tasks.
 Only the description can be updated; status changes require complete_task.
 """
 
+from typing import Optional
 from uuid import UUID
 
 from mcp.server.fastmcp import Context
 from sqlalchemy import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from src.db.engine import get_engine
 from src.mcp_server.schemas import TaskData, ToolResult
 from src.mcp_server.server import AppContext, mcp
 from src.models.task import Task
+
+
+def _get_db_engine(ctx: Optional[Context]):
+    """Get database engine from context or fallback to global engine."""
+    if ctx is not None:
+        app_context: AppContext = ctx.request_context.lifespan_context
+        return app_context.engine
+    return get_engine()
 
 
 @mcp.tool()
@@ -20,7 +30,7 @@ async def update_task(
     user_id: str,
     task_id: str,
     description: str,
-    ctx: Context,
+    ctx: Optional[Context] = None,
 ) -> ToolResult:
     """Update the description of an existing task.
 
@@ -28,6 +38,7 @@ async def update_task(
         user_id: The authenticated user's ID (externally provided)
         task_id: The UUID of the task to update
         description: New task description (1-1000 characters)
+        ctx: MCP context (optional, uses global engine if not provided)
 
     Returns:
         ToolResult with the updated task data, or error if validation fails
@@ -67,9 +78,8 @@ async def update_task(
         )
 
     try:
-        # Get engine from context
-        app_context: AppContext = ctx.request_context.lifespan_context
-        engine = app_context.engine
+        # Get engine from context or fallback
+        engine = _get_db_engine(ctx)
 
         async with AsyncSession(engine) as session:
             # Find the task
@@ -105,6 +115,7 @@ async def update_task(
                     id=task.id,
                     description=task.description,
                     status=task.status.value,
+                    due_date=task.due_date,
                     created_at=task.created_at,
                     completed_at=task.completed_at,
                 ),

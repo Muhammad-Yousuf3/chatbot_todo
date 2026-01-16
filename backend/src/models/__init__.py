@@ -14,5 +14,6 @@ class MessageRole(str, Enum):
 from src.models.conversation import Conversation
 from src.models.message import Message
 from src.models.task import Task, TaskStatus
+from src.models.user import User
 
-__all__ = ["Conversation", "Message", "MessageRole", "Task", "TaskStatus"]
+__all__ = ["Conversation", "Message", "MessageRole", "Task", "TaskStatus", "User"]

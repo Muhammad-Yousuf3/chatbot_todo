@@ -6,28 +6,39 @@ The operation is idempotent - completing an already completed task succeeds with
 """
 
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from mcp.server.fastmcp import Context
 from sqlalchemy import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from src.db.engine import get_engine
 from src.mcp_server.schemas import TaskData, ToolResult
 from src.mcp_server.server import AppContext, mcp
 from src.models.task import Task, TaskStatus
+
+
+def _get_db_engine(ctx: Optional[Context]):
+    """Get database engine from context or fallback to global engine."""
+    if ctx is not None:
+        app_context: AppContext = ctx.request_context.lifespan_context
+        return app_context.engine
+    return get_engine()
 
 
 @mcp.tool()
 async def complete_task(
     user_id: str,
     task_id: str,
-    ctx: Context,
+    ctx: Optional[Context] = None,
 ) -> ToolResult:
     """Mark a task as completed.
 
     Args:
         user_id: The authenticated user's ID (externally provided)
         task_id: The UUID of the task to complete
+        ctx: MCP context (optional, uses global engine if not provided)
 
     Returns:
         ToolResult with the completed task data, or error if validation fails
@@ -51,9 +62,8 @@ async def complete_task(
         )
 
     try:
-        # Get engine from context
-        app_context: AppContext = ctx.request_context.lifespan_context
-        engine = app_context.engine
+        # Get engine from context or fallback
+        engine = _get_db_engine(ctx)
 
         async with AsyncSession(engine) as session:
             # Find the task
@@ -84,6 +94,7 @@ async def complete_task(
                         id=task.id,
                         description=task.description,
                         status=task.status.value,
+                        due_date=task.due_date,
                         created_at=task.created_at,
                         completed_at=task.completed_at,
                     ),
@@ -103,6 +114,7 @@ async def complete_task(
                     id=task.id,
                     description=task.description,
                     status=task.status.value,
+                    due_date=task.due_date,
                     created_at=task.created_at,
                     completed_at=task.completed_at,
                 ),

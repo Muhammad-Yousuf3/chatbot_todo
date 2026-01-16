@@ -214,6 +214,15 @@ See `.specify/memory/constitution.md` for code quality, testing, performance, se
 - PostgreSQL (Neon) with SQLModel ORM (001-conversation-persistence)
 - Python 3.11+ + FastAPI, MCP SDK (>=1.25,<2), SQLModel, Pydantic (002-mcp-task-tools)
 - PostgreSQL (Neon) via SQLModel with async engine (002-mcp-task-tools)
+- Python 3.11+ + OpenAI Agents SDK, MCP SDK (>=1.25,<2), Pydantic (003-agent-behavior-policy)
+- PostgreSQL (Neon) via SQLModel - accessed ONLY through MCP tools (003-agent-behavior-policy)
+- Python 3.11+ + OpenAI Agents SDK, MCP SDK (>=1.25,<2), Pydantic, SQLite (via aiosqlite) (004-agent-observability)
+- SQLite (logs.db) - separate from PostgreSQL tasks database (004-agent-observability)
+- TypeScript 5.x, React 18+, Node.js 20+ + Next.js 14+, @openai/chatkit-react, Tailwind CSS 3.4+, SWR (006-frontend-chat-ui)
+- N/A (stateless frontend, all data from backend) (006-frontend-chat-ui)
+- Python 3.11+ + FastAPI, python-jose[cryptography], passlib (007-jwt-authentication)
+- JWT HS256 tokens for stateless auth validation (007-jwt-authentication)
 
 ## Recent Changes
+- 007-jwt-authentication: JWT auth migration replacing insecure X-User-Id header
 - 001-conversation-persistence: Added Python 3.11+ + FastAPI, SQLModel, Pydantic, uvicorn
