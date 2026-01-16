@@ -266,7 +266,14 @@ export type ErrorCode =
   | 'DECISION_NOT_FOUND'
   | 'NETWORK_ERROR'
   | 'TIMEOUT'
-  | 'UNKNOWN';
+  | 'UNKNOWN'
+  // Authentication error codes
+  | 'INVALID_CREDENTIALS'
+  | 'EMAIL_EXISTS'
+  | 'MISSING_TOKEN'
+  | 'INVALID_TOKEN'
+  | 'TOKEN_EXPIRED'
+  | 'PASSWORD_TOO_LONG';
 
 export interface ApiError {
   error: {
