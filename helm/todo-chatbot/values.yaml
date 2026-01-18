@@ -1,0 +1,97 @@
+# Global configuration
+global:
+  # Kubernetes namespace for all resources
+  namespace: "todo-chatbot"
+  # Default image pull policy for all deployments
+  imagePullPolicy: "IfNotPresent"
+
+# Backend configuration
+backend:
+  # Enable/disable backend deployment
+  enabled: true
+
+  image:
+    # Container image repository
+    repository: "todo-backend"
+    # Container image tag
+    tag: "dev"
+    # Override global imagePullPolicy (leave empty to use global)
+    pullPolicy: ""
+
+  # Number of pod replicas
+  replicas: 1
+
+  service:
+    # Kubernetes service type
+    type: "ClusterIP"
+    # Service port
+    port: 8000
+
+  config:
+    # Logging level
+    logLevel: "INFO"
+    # Frontend URL for CORS
+    frontendUrl: "http://todo-frontend:80"
+
+  secrets:
+    # REQUIRED: PostgreSQL connection string
+    # Format: postgresql://user:password@host:port/database
+    databaseUrl: ""
+    # REQUIRED: JWT signing secret (minimum 32 characters recommended)
+    jwtSecret: ""
+    # REQUIRED: Google Gemini API key
+    geminiApiKey: ""
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  probes:
+    liveness:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 3
+    readiness:
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      failureThreshold: 3
+
+# Frontend configuration
+frontend:
+  # Enable/disable frontend deployment
+  enabled: true
+
+  image:
+    # Container image repository
+    repository: "todo-frontend"
+    # Container image tag
+    tag: "dev"
+    # Override global imagePullPolicy (leave empty to use global)
+    pullPolicy: ""
+
+  # Number of pod replicas
+  replicas: 1
+
+  service:
+    # Kubernetes service type
+    type: "NodePort"
+    # Service port
+    port: 80
+    # NodePort (when type is NodePort, leave null for auto-assign)
+    nodePort: null
+
+  config:
+    # Backend API URL (used at build time)
+    apiUrl: "http://todo-backend:8000"
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"

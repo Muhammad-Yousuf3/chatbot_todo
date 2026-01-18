@@ -70,3 +70,15 @@ next-env.d.ts
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+
+# Kubernetes / Helm
+*.secret.yaml
+secrets/
+.kube/
+kubeconfig*
+*.key
+*.crt
+*.pem
+
+# Helm values with secrets (keep template, ignore local overrides with secrets)
+helm/**/values-secrets.yaml

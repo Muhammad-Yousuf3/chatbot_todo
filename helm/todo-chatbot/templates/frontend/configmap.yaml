@@ -1,0 +1,14 @@
+{{- if .Values.frontend.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "todo-chatbot.frontend.configmap" . }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+    {{- include "todo-chatbot.frontend.selectorLabels" . | nindent 4 }}
+data:
+  # Note: This is used for documentation purposes
+  # NEXT_PUBLIC_API_URL is baked into the static build at Docker image creation time
+  NEXT_PUBLIC_API_URL: {{ .Values.frontend.config.apiUrl | quote }}
+{{- end }}

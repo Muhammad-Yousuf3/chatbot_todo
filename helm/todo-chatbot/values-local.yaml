@@ -1,0 +1,53 @@
+# Minikube-specific configuration overrides
+# Usage: helm install todo-app ./helm/todo-chatbot -f helm/todo-chatbot/values-local.yaml
+
+global:
+  namespace: "todo-chatbot"
+  imagePullPolicy: "IfNotPresent"
+
+backend:
+  image:
+    repository: "todo-backend"
+    tag: "dev"
+
+  replicas: 1
+
+  config:
+    logLevel: "INFO"
+    frontendUrl: "http://todo-frontend:80"
+
+  # REQUIRED: Fill in these values before deployment
+  secrets:
+    databaseUrl: ""      # Your Neon PostgreSQL URL
+    jwtSecret: ""        # Your JWT signing secret
+    geminiApiKey: ""     # Your Gemini API key
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+frontend:
+  image:
+    repository: "todo-frontend"
+    tag: "dev"
+
+  replicas: 1
+
+  service:
+    type: "NodePort"
+    port: 80
+
+  config:
+    apiUrl: "http://todo-backend:8000"
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"

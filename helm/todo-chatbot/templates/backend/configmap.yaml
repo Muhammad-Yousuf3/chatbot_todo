@@ -1,0 +1,13 @@
+{{- if .Values.backend.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "todo-chatbot.backend.configmap" . }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+    {{- include "todo-chatbot.backend.selectorLabels" . | nindent 4 }}
+data:
+  LOG_LEVEL: {{ .Values.backend.config.logLevel | quote }}
+  FRONTEND_URL: {{ .Values.backend.config.frontendUrl | quote }}
+{{- end }}
