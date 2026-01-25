@@ -3,8 +3,10 @@
 This tool allows AI agents to mark tasks as completed.
 Completing a task sets status to 'completed' and records the completion timestamp.
 The operation is idempotent - completing an already completed task succeeds without error.
+Extended for Phase V with event publishing.
 """
 
+import logging
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -14,9 +16,12 @@ from sqlalchemy import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.db.engine import get_engine
+from src.events.publisher import get_event_publisher
 from src.mcp_server.schemas import TaskData, ToolResult
 from src.mcp_server.server import AppContext, mcp
-from src.models.task import Task, TaskStatus
+from src.models import Task, TaskStatus
+
+logger = logging.getLogger(__name__)
 
 
 def _get_db_engine(ctx: Optional[Context]):
@@ -61,12 +66,12 @@ async def complete_task(
             error_code="VALIDATION_ERROR",
         )
 
+    event_published = False
+
     try:
-        # Get engine from context or fallback
         engine = _get_db_engine(ctx)
 
         async with AsyncSession(engine) as session:
-            # Find the task
             stmt = select(Task).where(Task.id == task_uuid)
             result = await session.execute(stmt)
             task = result.scalar_one_or_none()
@@ -78,7 +83,6 @@ async def complete_task(
                     error_code="NOT_FOUND",
                 )
 
-            # Verify ownership
             if task.user_id != user_id.strip():
                 return ToolResult(
                     success=False,
@@ -92,32 +96,53 @@ async def complete_task(
                     success=True,
                     data=TaskData(
                         id=task.id,
+                        title=task.title,
                         description=task.description,
                         status=task.status.value,
+                        priority=task.priority.value,
+                        tags=task.tags or [],
                         due_date=task.due_date,
                         created_at=task.created_at,
+                        updated_at=task.updated_at,
                         completed_at=task.completed_at,
+                        has_reminders=bool(task.reminders),
+                        has_recurrence=task.recurrence is not None,
                     ),
+                    event_published=False,  # No event for idempotent case
                 )
 
             # Complete the task
             task.status = TaskStatus.COMPLETED
             task.completed_at = datetime.utcnow()
+            task.updated_at = datetime.utcnow()
             session.add(task)
             await session.commit()
             await session.refresh(task)
 
-            # Return success with completed task data
+            # Publish TaskCompleted event
+            try:
+                publisher = get_event_publisher()
+                event_published = await publisher.publish_task_completed(task)
+            except Exception as e:
+                logger.error(f"Failed to publish TaskCompleted event: {e}")
+
             return ToolResult(
                 success=True,
                 data=TaskData(
                     id=task.id,
+                    title=task.title,
                     description=task.description,
                     status=task.status.value,
+                    priority=task.priority.value,
+                    tags=task.tags or [],
                     due_date=task.due_date,
                     created_at=task.created_at,
+                    updated_at=task.updated_at,
                     completed_at=task.completed_at,
+                    has_reminders=bool(task.reminders),
+                    has_recurrence=task.recurrence is not None,
                 ),
+                event_published=event_published,
             )
 
     except Exception as e:

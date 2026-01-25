@@ -60,6 +60,87 @@ backend:
       periodSeconds: 5
       failureThreshold: 3
 
+  # Dapr configuration for backend
+  dapr:
+    enabled: true
+    appId: "backend"
+    appPort: 8000
+
+# Scheduler configuration
+scheduler:
+  # Enable/disable scheduler deployment
+  enabled: true
+
+  image:
+    # Container image repository
+    repository: "todo-scheduler"
+    # Container image tag
+    tag: "dev"
+    # Override global imagePullPolicy (leave empty to use global)
+    pullPolicy: ""
+
+  # Number of pod replicas
+  replicas: 1
+
+  service:
+    # Kubernetes service type
+    type: "ClusterIP"
+    # Service port
+    port: 8001
+
+  config:
+    # Logging level
+    logLevel: "INFO"
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+  probes:
+    liveness:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 3
+    readiness:
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      failureThreshold: 3
+
+  # Dapr configuration for scheduler
+  dapr:
+    enabled: true
+    appId: "scheduler"
+    appPort: 8001
+
+# Redis configuration
+redis:
+  # Enable/disable Redis deployment
+  enabled: true
+
+  image:
+    repository: "redis"
+    tag: "7-alpine"
+
+  service:
+    type: "ClusterIP"
+    port: 6379
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+  persistence:
+    enabled: false
+    size: "1Gi"
+
 # Frontend configuration
 frontend:
   # Enable/disable frontend deployment
@@ -95,3 +176,29 @@ frontend:
     limits:
       cpu: "200m"
       memory: "128Mi"
+
+# Dapr components configuration
+dapr:
+  # Enable/disable Dapr components
+  enabled: true
+
+  components:
+    pubsub:
+      name: "pubsub"
+      type: "pubsub.redis"
+
+    statestore:
+      name: "statestore"
+      type: "state.redis"
+
+    secrets:
+      name: "kubernetes-secrets"
+      type: "secretstores.kubernetes"
+
+    bindings:
+      recurring:
+        name: "recurring-task-trigger"
+        schedule: "@every 1m"
+      reminders:
+        name: "reminder-check-trigger"
+        schedule: "@every 1m"

@@ -1,0 +1,17 @@
+{{- if .Values.scheduler.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: scheduler-svc
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: scheduler
+spec:
+  type: {{ .Values.scheduler.service.type }}
+  ports:
+    - port: {{ .Values.scheduler.service.port }}
+      targetPort: {{ .Values.scheduler.service.port }}
+      name: http
+  selector:
+    app: scheduler
+{{- end }}

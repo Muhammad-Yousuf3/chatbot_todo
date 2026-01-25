@@ -1,10 +1,12 @@
 """MCP tool for listing user's tasks.
 
-This tool allows AI agents to retrieve all tasks belonging to an authenticated user.
+This tool allows AI agents to retrieve tasks belonging to an authenticated user.
+Supports filtering by status, priority, and tags.
 Tasks are returned sorted by created_at descending (newest first).
+Extended for Phase V with filtering capabilities.
 """
 
-from typing import Optional
+from typing import List, Optional
 
 from mcp.server.fastmcp import Context
 from sqlalchemy import select
@@ -13,7 +15,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.engine import get_engine
 from src.mcp_server.schemas import TaskData, ToolResult
 from src.mcp_server.server import AppContext, mcp
-from src.models.task import Task
+from src.models import Task, TaskPriority, TaskStatus
 
 
 def _get_db_engine(ctx: Optional[Context]):
@@ -28,12 +30,18 @@ def _get_db_engine(ctx: Optional[Context]):
 async def list_tasks(
     user_id: str,
     ctx: Optional[Context] = None,
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    tag: Optional[str] = None,
 ) -> ToolResult:
-    """Retrieve all tasks for the specified user.
+    """Retrieve tasks for the specified user with optional filtering.
 
     Args:
         user_id: The authenticated user's ID (externally provided)
         ctx: MCP context (optional, uses global engine if not provided)
+        status: Optional filter by status: "pending", "in_progress", or "completed"
+        priority: Optional filter by priority: "high", "medium", or "low"
+        tag: Optional filter by tag (must contain this tag)
 
     Returns:
         ToolResult with list of tasks sorted by created_at descending,
@@ -47,17 +55,49 @@ async def list_tasks(
             error_code="VALIDATION_ERROR",
         )
 
+    # Validate status filter
+    task_status = None
+    if status is not None:
+        status_lower = status.lower()
+        if status_lower not in ["pending", "in_progress", "completed"]:
+            return ToolResult(
+                success=False,
+                error="Invalid status. Must be 'pending', 'in_progress', or 'completed'",
+                error_code="VALIDATION_ERROR",
+            )
+        task_status = TaskStatus(status_lower)
+
+    # Validate priority filter
+    task_priority = None
+    if priority is not None:
+        priority_lower = priority.lower()
+        if priority_lower not in ["high", "medium", "low"]:
+            return ToolResult(
+                success=False,
+                error="Invalid priority. Must be 'high', 'medium', or 'low'",
+                error_code="VALIDATION_ERROR",
+            )
+        task_priority = TaskPriority(priority_lower)
+
     try:
-        # Get engine from context or fallback
         engine = _get_db_engine(ctx)
 
-        # Query tasks for user, sorted by created_at descending
         async with AsyncSession(engine) as session:
-            stmt = (
-                select(Task)
-                .where(Task.user_id == user_id.strip())
-                .order_by(Task.created_at.desc())
-            )
+            stmt = select(Task).where(Task.user_id == user_id.strip())
+
+            # Apply filters
+            if task_status is not None:
+                stmt = stmt.where(Task.status == task_status)
+
+            if task_priority is not None:
+                stmt = stmt.where(Task.priority == task_priority)
+
+            if tag is not None:
+                stmt = stmt.where(Task.tags.contains([tag.strip()]))
+
+            # Sort by created_at descending
+            stmt = stmt.order_by(Task.created_at.desc())
+
             result = await session.execute(stmt)
             tasks = result.scalars().all()
 
@@ -65,11 +105,17 @@ async def list_tasks(
             task_data_list = [
                 TaskData(
                     id=task.id,
+                    title=task.title,
                     description=task.description,
                     status=task.status.value,
+                    priority=task.priority.value,
+                    tags=task.tags or [],
                     due_date=task.due_date,
                     created_at=task.created_at,
+                    updated_at=task.updated_at,
                     completed_at=task.completed_at,
+                    has_reminders=bool(task.reminders),
+                    has_recurrence=task.recurrence is not None,
                 )
                 for task in tasks
             ]

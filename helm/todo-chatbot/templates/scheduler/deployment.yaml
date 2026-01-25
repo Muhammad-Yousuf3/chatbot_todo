@@ -1,0 +1,59 @@
+{{- if .Values.scheduler.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduler
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: scheduler
+spec:
+  replicas: {{ .Values.scheduler.replicas }}
+  selector:
+    matchLabels:
+      app: scheduler
+  template:
+    metadata:
+      labels:
+        app: scheduler
+      annotations:
+        {{- if .Values.scheduler.dapr.enabled }}
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "{{ .Values.scheduler.dapr.appId }}"
+        dapr.io/app-port: "{{ .Values.scheduler.dapr.appPort }}"
+        dapr.io/enable-api-logging: "true"
+        {{- end }}
+    spec:
+      containers:
+        - name: scheduler
+          image: "{{ .Values.scheduler.image.repository }}:{{ .Values.scheduler.image.tag }}"
+          imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.scheduler.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.scheduler.service.port }}
+              name: http
+          env:
+            - name: LOG_LEVEL
+              value: "{{ .Values.scheduler.config.logLevel }}"
+            - name: PORT
+              value: "{{ .Values.scheduler.service.port }}"
+          resources:
+            requests:
+              cpu: {{ .Values.scheduler.resources.requests.cpu }}
+              memory: {{ .Values.scheduler.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.scheduler.resources.limits.cpu }}
+              memory: {{ .Values.scheduler.resources.limits.memory }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.scheduler.service.port }}
+            initialDelaySeconds: {{ .Values.scheduler.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.scheduler.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.scheduler.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: {{ .Values.scheduler.service.port }}
+            initialDelaySeconds: {{ .Values.scheduler.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.scheduler.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.scheduler.probes.readiness.failureThreshold }}
+{{- end }}

@@ -222,6 +222,10 @@ See `.specify/memory/constitution.md` for code quality, testing, performance, se
 - N/A (stateless frontend, all data from backend) (006-frontend-chat-ui)
 - Python 3.11+ + FastAPI, python-jose[cryptography], passlib (007-jwt-authentication)
 - JWT HS256 tokens for stateless auth validation (007-jwt-authentication)
+- Python 3.11+ + FastAPI 0.109+, SQLModel, dapr-client (Python SDK), pydantic 2.x (009-dapr-event-driven)
+- PostgreSQL (existing via Neon), Redis (new - for Dapr Pub/Sub & State Store) (009-dapr-event-driven)
+- TypeScript 5.6.3, React 18.3.1, Next.js 14.2.21 + Next.js, React, SWR 2.2.5, Tailwind CSS 3.4.17, clsx 2.1.1 (010-ui-enablement)
+- N/A (frontend only, uses existing backend REST API) (010-ui-enablement)
 
 ## Recent Changes
 - 007-jwt-authentication: JWT auth migration replacing insecure X-User-Id header

@@ -1,0 +1,407 @@
+# Event Contracts: Phase V Part 1 - CloudEvents Schemas
+#
+# This file defines all event schemas using CloudEvents v1.0 specification.
+# All events are published via Dapr Pub/Sub to Redis Streams.
+#
+# Branch: 009-dapr-event-driven
+# Date: 2026-01-20
+
+asyncapi: "2.6.0"
+info:
+  title: Todo Chatbot Event API
+  version: "1.0.0"
+  description: |
+    Event-driven communication for the Todo Chatbot application.
+    Events follow CloudEvents v1.0 specification.
+
+servers:
+  local:
+    url: redis://redis-svc.todo-app.svc.cluster.local:6379
+    protocol: redis
+    description: Local Minikube Redis Streams
+
+channels:
+  tasks:
+    description: Task lifecycle events
+    publish:
+      operationId: publishTaskEvent
+      message:
+        oneOf:
+          - $ref: "#/components/messages/TaskCreated"
+          - $ref: "#/components/messages/TaskUpdated"
+          - $ref: "#/components/messages/TaskCompleted"
+          - $ref: "#/components/messages/TaskDeleted"
+          - $ref: "#/components/messages/RecurringTaskScheduled"
+    subscribe:
+      operationId: subscribeTaskEvent
+      message:
+        oneOf:
+          - $ref: "#/components/messages/TaskCreated"
+          - $ref: "#/components/messages/TaskUpdated"
+          - $ref: "#/components/messages/TaskCompleted"
+          - $ref: "#/components/messages/TaskDeleted"
+          - $ref: "#/components/messages/RecurringTaskScheduled"
+
+  notifications:
+    description: Notification and reminder events
+    publish:
+      operationId: publishNotificationEvent
+      message:
+        $ref: "#/components/messages/ReminderTriggered"
+    subscribe:
+      operationId: subscribeNotificationEvent
+      message:
+        $ref: "#/components/messages/ReminderTriggered"
+
+components:
+  messages:
+    TaskCreated:
+      name: TaskCreated
+      title: Task Created Event
+      contentType: application/json
+      headers:
+        $ref: "#/components/schemas/CloudEventHeaders"
+      payload:
+        $ref: "#/components/schemas/TaskCreatedPayload"
+
+    TaskUpdated:
+      name: TaskUpdated
+      title: Task Updated Event
+      contentType: application/json
+      headers:
+        $ref: "#/components/schemas/CloudEventHeaders"
+      payload:
+        $ref: "#/components/schemas/TaskUpdatedPayload"
+
+    TaskCompleted:
+      name: TaskCompleted
+      title: Task Completed Event
+      contentType: application/json
+      headers:
+        $ref: "#/components/schemas/CloudEventHeaders"
+      payload:
+        $ref: "#/components/schemas/TaskCompletedPayload"
+
+    TaskDeleted:
+      name: TaskDeleted
+      title: Task Deleted Event
+      contentType: application/json
+      headers:
+        $ref: "#/components/schemas/CloudEventHeaders"
+      payload:
+        $ref: "#/components/schemas/TaskDeletedPayload"
+
+    ReminderTriggered:
+      name: ReminderTriggered
+      title: Reminder Triggered Event
+      contentType: application/json
+      headers:
+        $ref: "#/components/schemas/CloudEventHeaders"
+      payload:
+        $ref: "#/components/schemas/ReminderTriggeredPayload"
+
+    RecurringTaskScheduled:
+      name: RecurringTaskScheduled
+      title: Recurring Task Scheduled Event
+      contentType: application/json
+      headers:
+        $ref: "#/components/schemas/CloudEventHeaders"
+      payload:
+        $ref: "#/components/schemas/RecurringTaskScheduledPayload"
+
+  schemas:
+    # CloudEvents envelope fields
+    CloudEventHeaders:
+      type: object
+      required:
+        - specversion
+        - id
+        - source
+        - type
+        - time
+        - datacontenttype
+      properties:
+        specversion:
+          type: string
+          const: "1.0"
+          description: CloudEvents specification version
+        id:
+          type: string
+          format: uuid
+          description: Unique event identifier
+          example: "evt-abc-123-def-456"
+        source:
+          type: string
+          description: Event source URI
+          example: "/backend/tasks"
+        type:
+          type: string
+          description: Event type identifier
+          example: "com.todo.task.created"
+        time:
+          type: string
+          format: date-time
+          description: Event timestamp (ISO 8601)
+          example: "2026-01-20T10:30:00Z"
+        datacontenttype:
+          type: string
+          const: "application/json"
+          description: Content type of data field
+
+    # Event payloads
+    TaskCreatedPayload:
+      type: object
+      required:
+        - task_id
+        - user_id
+        - title
+        - status
+        - priority
+        - created_at
+      properties:
+        task_id:
+          type: string
+          format: uuid
+          description: Unique task identifier
+        user_id:
+          type: string
+          description: Task owner user ID
+        title:
+          type: string
+          maxLength: 200
+          description: Task title
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: Detailed task description
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+          description: Task status
+        priority:
+          type: string
+          enum: [high, medium, low]
+          description: Task priority level
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          default: []
+          description: Task tags for categorization
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Task due date
+        created_at:
+          type: string
+          format: date-time
+          description: Task creation timestamp
+        reminders:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReminderEmbedded"
+          default: []
+          description: Associated reminders
+        recurrence:
+          $ref: "#/components/schemas/RecurrenceEmbedded"
+          nullable: true
+          description: Recurrence schedule if any
+
+    ReminderEmbedded:
+      type: object
+      required:
+        - reminder_id
+        - trigger_at
+      properties:
+        reminder_id:
+          type: string
+          format: uuid
+          description: Reminder identifier
+        trigger_at:
+          type: string
+          format: date-time
+          description: When reminder should trigger
+
+    RecurrenceEmbedded:
+      type: object
+      required:
+        - recurrence_id
+        - recurrence_type
+      properties:
+        recurrence_id:
+          type: string
+          format: uuid
+          description: Recurrence identifier
+        recurrence_type:
+          type: string
+          enum: [daily, weekly, custom]
+          description: Type of recurrence
+        cron_expression:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Cron expression for custom recurrence
+        next_occurrence:
+          type: string
+          format: date-time
+          nullable: true
+          description: Next scheduled occurrence
+
+    TaskUpdatedPayload:
+      type: object
+      required:
+        - task_id
+        - user_id
+        - updated_at
+        - changes
+      properties:
+        task_id:
+          type: string
+          format: uuid
+          description: Task identifier
+        user_id:
+          type: string
+          description: Task owner user ID
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+        changes:
+          type: object
+          description: Map of field changes
+          additionalProperties:
+            $ref: "#/components/schemas/FieldChange"
+
+    FieldChange:
+      type: object
+      required:
+        - old_value
+        - new_value
+      properties:
+        old_value:
+          description: Previous field value
+        new_value:
+          description: New field value
+
+    TaskCompletedPayload:
+      type: object
+      required:
+        - task_id
+        - user_id
+        - completed_at
+      properties:
+        task_id:
+          type: string
+          format: uuid
+          description: Task identifier
+        user_id:
+          type: string
+          description: Task owner user ID
+        completed_at:
+          type: string
+          format: date-time
+          description: Completion timestamp
+
+    TaskDeletedPayload:
+      type: object
+      required:
+        - task_id
+        - user_id
+      properties:
+        task_id:
+          type: string
+          format: uuid
+          description: Task identifier
+        user_id:
+          type: string
+          description: Task owner user ID
+
+    ReminderTriggeredPayload:
+      type: object
+      required:
+        - reminder_id
+        - task_id
+        - user_id
+        - task_title
+        - triggered_at
+      properties:
+        reminder_id:
+          type: string
+          format: uuid
+          description: Reminder identifier
+        task_id:
+          type: string
+          format: uuid
+          description: Associated task identifier
+        user_id:
+          type: string
+          description: Task owner user ID
+        task_title:
+          type: string
+          description: Task title for notification
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Task due date
+        triggered_at:
+          type: string
+          format: date-time
+          description: When reminder was triggered
+
+    RecurringTaskScheduledPayload:
+      type: object
+      required:
+        - source_task_id
+        - new_task_id
+        - user_id
+        - title
+        - recurrence_type
+        - scheduled_for
+      properties:
+        source_task_id:
+          type: string
+          format: uuid
+          description: Original recurring task ID
+        new_task_id:
+          type: string
+          format: uuid
+          description: Newly created task instance ID
+        user_id:
+          type: string
+          description: Task owner user ID
+        title:
+          type: string
+          description: Task title
+        recurrence_type:
+          type: string
+          enum: [daily, weekly, custom]
+          description: Type of recurrence
+        scheduled_for:
+          type: string
+          format: date-time
+          description: When this instance was scheduled for
+
+# Event type constants for reference
+x-event-types:
+  task-created: com.todo.task.created
+  task-updated: com.todo.task.updated
+  task-completed: com.todo.task.completed
+  task-deleted: com.todo.task.deleted
+  reminder-triggered: com.todo.reminder.triggered
+  recurring-scheduled: com.todo.recurring.scheduled
+
+# Topic-to-event mapping
+x-topic-events:
+  tasks:
+    - com.todo.task.created
+    - com.todo.task.updated
+    - com.todo.task.completed
+    - com.todo.task.deleted
+    - com.todo.recurring.scheduled
+  notifications:
+    - com.todo.reminder.triggered

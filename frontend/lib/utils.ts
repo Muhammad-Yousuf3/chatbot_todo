@@ -104,3 +104,100 @@ export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength - 3) + '...';
 }
+
+// ============================================================================
+// Task Validation - Feature: 010-ui-enablement
+// ============================================================================
+
+/**
+ * Validation limits matching backend constraints
+ */
+export const VALIDATION_LIMITS = {
+  TITLE_MIN_LENGTH: 1,
+  TITLE_MAX_LENGTH: 200,
+  DESCRIPTION_MAX_LENGTH: 2000,
+  MAX_TAGS: 10,
+  MAX_TAG_LENGTH: 50,
+  MAX_REMINDERS: 5,
+} as const;
+
+/**
+ * Validate task form state
+ * Returns validation errors or empty object if valid
+ */
+export function validateTaskForm(state: {
+  title: string;
+  description: string;
+  tags: string[];
+  reminders: Array<{ trigger_at: string }>;
+  recurrence: { recurrence_type: string; cron_expression?: string | null } | null;
+}): Record<string, string> {
+  const errors: Record<string, string> = {};
+
+  // Title validation
+  if (!state.title.trim()) {
+    errors.title = 'Title is required';
+  } else if (state.title.length > VALIDATION_LIMITS.TITLE_MAX_LENGTH) {
+    errors.title = `Title must be ${VALIDATION_LIMITS.TITLE_MAX_LENGTH} characters or less`;
+  }
+
+  // Description validation
+  if (state.description.length > VALIDATION_LIMITS.DESCRIPTION_MAX_LENGTH) {
+    errors.description = `Description must be ${VALIDATION_LIMITS.DESCRIPTION_MAX_LENGTH} characters or less`;
+  }
+
+  // Tags validation
+  if (state.tags.length > VALIDATION_LIMITS.MAX_TAGS) {
+    errors.tags = `Maximum ${VALIDATION_LIMITS.MAX_TAGS} tags allowed`;
+  }
+  const invalidTag = state.tags.find(tag => tag.length > VALIDATION_LIMITS.MAX_TAG_LENGTH);
+  if (invalidTag) {
+    errors.tags = `Each tag must be ${VALIDATION_LIMITS.MAX_TAG_LENGTH} characters or less`;
+  }
+
+  // Reminders validation
+  if (state.reminders.length > VALIDATION_LIMITS.MAX_REMINDERS) {
+    errors.reminders = `Maximum ${VALIDATION_LIMITS.MAX_REMINDERS} reminders allowed`;
+  }
+
+  // Recurrence validation
+  if (state.recurrence) {
+    if (state.recurrence.recurrence_type === 'custom' && !state.recurrence.cron_expression) {
+      errors.cron_expression = 'Cron expression is required for custom recurrence';
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Build query string from task query params
+ * Omits undefined/null values
+ */
+export function buildTaskQueryString(params: {
+  status?: string;
+  priority?: string;
+  tag?: string;
+  search?: string;
+  due_before?: string;
+  due_after?: string;
+  sort_by?: string;
+  sort_order?: string;
+  limit?: number;
+  offset?: number;
+}): string {
+  const searchParams = new URLSearchParams();
+
+  if (params.status) searchParams.append('status', params.status);
+  if (params.priority) searchParams.append('priority', params.priority);
+  if (params.tag) searchParams.append('tag', params.tag);
+  if (params.search) searchParams.append('search', params.search);
+  if (params.due_before) searchParams.append('due_before', params.due_before);
+  if (params.due_after) searchParams.append('due_after', params.due_after);
+  if (params.sort_by) searchParams.append('sort_by', params.sort_by);
+  if (params.sort_order) searchParams.append('sort_order', params.sort_order);
+  if (params.limit !== undefined) searchParams.append('limit', params.limit.toString());
+  if (params.offset !== undefined) searchParams.append('offset', params.offset.toString());
+
+  return searchParams.toString();
+}

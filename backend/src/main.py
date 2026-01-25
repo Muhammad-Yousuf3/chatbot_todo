@@ -3,6 +3,7 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -14,7 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 _env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(_env_path)
 
-from src.api.routes import auth_router, chat_router, conversations_router, observability_router, tasks_router
+from src.api.routes import auth_router, chat_router, conversations_router, events_router, observability_router, tasks_router
+from src.dapr.client import close_dapr_service, get_dapr_service, is_dapr_enabled
 from src.db import init_db
 
 logger = logging.getLogger(__name__)
@@ -51,6 +53,17 @@ async def lifespan(app: FastAPI):
         logger.error(f"Observability SQLite initialization failed: {e}")
         logger.warning("Observability features may be limited")
 
+    # Startup Phase 3: Initialize Dapr client
+    try:
+        dapr_service = get_dapr_service()
+        if dapr_service.enabled:
+            logger.info("Dapr client initialized successfully")
+        else:
+            logger.info("Running without Dapr sidecar - event publishing disabled")
+    except Exception as e:
+        logger.warning(f"Dapr client initialization failed: {e}")
+        logger.info("Continuing without Dapr - event publishing disabled")
+
     yield
 
     # Shutdown: cleanup database connections
@@ -60,6 +73,13 @@ async def lifespan(app: FastAPI):
         logger.info("Database connections closed")
     except Exception as e:
         logger.warning(f"Error during database cleanup: {e}")
+
+    # Shutdown: cleanup Dapr client
+    try:
+        await close_dapr_service()
+        logger.info("Dapr client closed")
+    except Exception as e:
+        logger.warning(f"Error during Dapr cleanup: {e}")
 
 
 app = FastAPI(
@@ -87,6 +107,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(conversations_router)
+app.include_router(events_router)
 app.include_router(observability_router)
 app.include_router(tasks_router)
 
@@ -94,4 +115,68 @@ app.include_router(tasks_router)
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy"}
+    dapr_service = get_dapr_service()
+    return {
+        "status": "healthy",
+        "service": "backend",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "dapr_enabled": is_dapr_enabled(),
+    }
+
+
+@app.get("/health/dapr")
+async def dapr_health_check():
+    """Dapr sidecar health check endpoint."""
+    dapr_service = get_dapr_service()
+    dapr_health = dapr_service.check_health()
+
+    status = "healthy" if dapr_health.get("dapr_sidecar_healthy", False) else "degraded"
+    if not dapr_health.get("dapr_enabled", False):
+        status = "disabled"
+
+    return {
+        "status": status,
+        "service": "backend",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        **dapr_health,
+    }
+
+
+@app.get("/ready")
+async def readiness_check():
+    """Readiness probe endpoint for Kubernetes."""
+    dapr_service = get_dapr_service()
+    dapr_health = dapr_service.check_health()
+
+    # Ready if Dapr is disabled (non-Dapr mode) or Dapr is healthy
+    dapr_ready = not dapr_health.get("dapr_enabled") or dapr_health.get("dapr_sidecar_healthy", False)
+
+    return {
+        "status": "ready" if dapr_ready else "not_ready",
+        "service": "backend",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "dapr_ready": dapr_ready,
+    }
+
+
+@app.get("/dapr/subscribe")
+async def dapr_subscribe():
+    """Return Dapr subscription configuration.
+
+    This endpoint is called by Dapr sidecar to discover event subscriptions.
+    Backend subscribes to:
+    - tasks topic: for RecurringTaskScheduled events
+    - notifications topic: for ReminderTriggered events
+    """
+    return [
+        {
+            "pubsubname": "pubsub",
+            "topic": "tasks",
+            "route": "/events/tasks",
+        },
+        {
+            "pubsubname": "pubsub",
+            "topic": "notifications",
+            "route": "/events/notifications",
+        },
+    ]

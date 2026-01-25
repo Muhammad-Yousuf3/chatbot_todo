@@ -21,6 +21,12 @@ spec:
         # Force pod restart when secrets change
         checksum/secret: {{ include (print $.Template.BasePath "/backend/secret.yaml") . | sha256sum }}
         checksum/config: {{ include (print $.Template.BasePath "/backend/configmap.yaml") . | sha256sum }}
+        {{- if and .Values.dapr.enabled .Values.backend.dapr.enabled }}
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "{{ .Values.backend.dapr.appId }}"
+        dapr.io/app-port: "{{ .Values.backend.dapr.appPort }}"
+        dapr.io/enable-api-logging: "true"
+        {{- end }}
     spec:
       containers:
         - name: backend

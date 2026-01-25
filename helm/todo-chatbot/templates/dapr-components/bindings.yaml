@@ -1,0 +1,34 @@
+{{- if and .Values.dapr.enabled .Values.scheduler.enabled }}
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: {{ .Values.dapr.components.bindings.recurring.name }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+    - name: schedule
+      value: "{{ .Values.dapr.components.bindings.recurring.schedule }}"
+    - name: route
+      value: "/triggers/recurring"
+  scopes:
+    - {{ .Values.scheduler.dapr.appId }}
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: {{ .Values.dapr.components.bindings.reminders.name }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+    - name: schedule
+      value: "{{ .Values.dapr.components.bindings.reminders.schedule }}"
+    - name: route
+      value: "/triggers/reminders"
+  scopes:
+    - {{ .Values.scheduler.dapr.appId }}
+{{- end }}

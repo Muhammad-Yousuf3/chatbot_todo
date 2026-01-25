@@ -1,0 +1,477 @@
+# Scheduler Service API Contract
+#
+# OpenAPI 3.0 specification for the Scheduler Service.
+# This service handles recurring tasks and reminders via Dapr building blocks.
+#
+# Branch: 009-dapr-event-driven
+# Date: 2026-01-20
+
+openapi: "3.0.3"
+info:
+  title: Todo Chatbot Scheduler Service API
+  version: "1.0.0"
+  description: |
+    Scheduler Service for handling recurring tasks and reminders.
+    This service:
+    - Subscribes to task lifecycle events from Backend
+    - Manages recurring task schedules via Dapr State Store
+    - Manages reminder state via Dapr State Store
+    - Responds to cron binding triggers
+    - Publishes ReminderTriggered and RecurringTaskScheduled events
+
+servers:
+  - url: http://scheduler-svc.todo-app.svc.cluster.local:8001
+    description: Kubernetes ClusterIP service
+
+paths:
+  # Dapr subscription configuration
+  /dapr/subscribe:
+    get:
+      operationId: getDaprSubscriptions
+      summary: Dapr subscription configuration
+      description: Returns list of Pub/Sub subscriptions for Dapr sidecar
+      tags:
+        - Dapr
+      responses:
+        "200":
+          description: Subscription configuration
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DaprSubscription"
+              example:
+                - pubsubname: pubsub
+                  topic: tasks
+                  route: /events/tasks
+
+  # Event subscription endpoints
+  /events/tasks:
+    post:
+      operationId: handleTaskEvent
+      summary: Handle task lifecycle events
+      description: |
+        Receives TaskCreated, TaskUpdated, TaskCompleted, TaskDeleted events.
+        Updates recurring schedules and reminders in State Store accordingly.
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudEvent"
+      responses:
+        "200":
+          description: Event processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+        "400":
+          description: Invalid event format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Event already processed (idempotency)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+
+  # Cron binding trigger endpoints
+  /triggers/recurring:
+    post:
+      operationId: handleRecurringTrigger
+      summary: Handle recurring task cron trigger
+      description: |
+        Called by Dapr cron binding every minute.
+        Checks State Store for recurring tasks due to be instantiated.
+        Publishes RecurringTaskScheduled events for due tasks.
+      tags:
+        - Triggers
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CronTriggerPayload"
+      responses:
+        "200":
+          description: Trigger processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TriggerResponse"
+        "500":
+          description: Internal error during processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /triggers/reminders:
+    post:
+      operationId: handleReminderTrigger
+      summary: Handle reminder check cron trigger
+      description: |
+        Called by Dapr cron binding every minute.
+        Checks State Store for reminders due to fire.
+        Publishes ReminderTriggered events for due reminders.
+      tags:
+        - Triggers
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CronTriggerPayload"
+      responses:
+        "200":
+          description: Trigger processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TriggerResponse"
+        "500":
+          description: Internal error during processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Health endpoints
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check endpoint
+      description: Returns service health status
+      tags:
+        - Health
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /health/ready:
+    get:
+      operationId: readinessCheck
+      summary: Readiness check endpoint
+      description: Returns whether service is ready to receive traffic
+      tags:
+        - Health
+      responses:
+        "200":
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service not ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  # Debug/Admin endpoints (local development only)
+  /admin/schedules:
+    get:
+      operationId: listSchedules
+      summary: List all recurring schedules
+      description: |
+        Returns all recurring task schedules from State Store.
+        Only available in local development mode.
+      tags:
+        - Admin
+      parameters:
+        - name: user_id
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecurringScheduleState"
+        "403":
+          description: Admin endpoints disabled in production
+
+  /admin/reminders:
+    get:
+      operationId: listReminders
+      summary: List all reminders
+      description: |
+        Returns all reminder states from State Store.
+        Only available in local development mode.
+      tags:
+        - Admin
+      parameters:
+        - name: user_id
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+        - name: pending_only
+          in: query
+          description: Only return pending reminders
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: List of reminders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReminderState"
+        "403":
+          description: Admin endpoints disabled in production
+
+components:
+  schemas:
+    # Dapr-specific schemas
+    DaprSubscription:
+      type: object
+      required:
+        - pubsubname
+        - topic
+        - route
+      properties:
+        pubsubname:
+          type: string
+          description: Name of Dapr Pub/Sub component
+          example: pubsub
+        topic:
+          type: string
+          description: Topic name to subscribe to
+          example: tasks
+        route:
+          type: string
+          description: HTTP route for event delivery
+          example: /events/tasks
+
+    CloudEvent:
+      type: object
+      description: CloudEvents v1.0 envelope
+      required:
+        - specversion
+        - id
+        - source
+        - type
+        - time
+        - datacontenttype
+        - data
+      properties:
+        specversion:
+          type: string
+          const: "1.0"
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+        type:
+          type: string
+          description: |
+            Event type. One of:
+            - com.todo.task.created
+            - com.todo.task.updated
+            - com.todo.task.completed
+            - com.todo.task.deleted
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          type: string
+          const: application/json
+        data:
+          type: object
+          description: Event-specific payload
+
+    CronTriggerPayload:
+      type: object
+      description: Payload from Dapr cron binding (may be empty)
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Trigger timestamp
+
+    # Response schemas
+    EventResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [processed, duplicate, error]
+          description: Event processing status
+        event_id:
+          type: string
+          description: Processed event ID
+        message:
+          type: string
+          description: Additional details
+
+    TriggerResponse:
+      type: object
+      required:
+        - status
+        - processed_count
+      properties:
+        status:
+          type: string
+          enum: [success, partial, error]
+        processed_count:
+          type: integer
+          description: Number of items processed
+        errors:
+          type: array
+          items:
+            type: string
+          description: Error messages if any
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy, degraded]
+        dapr_connected:
+          type: boolean
+          description: Whether Dapr sidecar is reachable
+        state_store_connected:
+          type: boolean
+          description: Whether State Store is accessible
+        timestamp:
+          type: string
+          format: date-time
+
+    # State Store schemas
+    RecurringScheduleState:
+      type: object
+      description: State stored for recurring tasks in Dapr State Store
+      required:
+        - task_id
+        - user_id
+        - title
+        - recurrence_type
+        - next_occurrence
+        - created_from_event_id
+      properties:
+        task_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        priority:
+          type: string
+          enum: [high, medium, low]
+        tags:
+          type: array
+          items:
+            type: string
+        recurrence_type:
+          type: string
+          enum: [daily, weekly, custom]
+        cron_expression:
+          type: string
+          nullable: true
+        next_occurrence:
+          type: string
+          format: date-time
+        last_scheduled:
+          type: string
+          format: date-time
+          nullable: true
+        created_from_event_id:
+          type: string
+          description: Event ID that created this schedule (idempotency)
+
+    ReminderState:
+      type: object
+      description: State stored for reminders in Dapr State Store
+      required:
+        - reminder_id
+        - task_id
+        - user_id
+        - task_title
+        - trigger_at
+        - fired
+        - cancelled
+        - created_from_event_id
+      properties:
+        reminder_id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        task_title:
+          type: string
+        trigger_at:
+          type: string
+          format: date-time
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        fired:
+          type: boolean
+        cancelled:
+          type: boolean
+        created_from_event_id:
+          type: string
+          description: Event ID that created this reminder (idempotency)
+
+tags:
+  - name: Dapr
+    description: Dapr sidecar integration endpoints
+  - name: Events
+    description: Event subscription handlers
+  - name: Triggers
+    description: Cron binding trigger handlers
+  - name: Health
+    description: Health check endpoints
+  - name: Admin
+    description: Debug/admin endpoints (local development only)

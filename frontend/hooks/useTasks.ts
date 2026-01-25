@@ -10,27 +10,32 @@
 import useSWR from 'swr';
 import { useState, useCallback } from 'react';
 import { apiClient, ApiClientError } from '@/lib/api';
-import type { Task, TaskStatus, TaskListResponse } from '@/types';
+import { buildTaskQueryString } from '@/lib/utils';
+import type { Task, TaskQueryParams, TaskCreateRequest, TaskUpdateRequest, TaskListResponse } from '@/types';
 
 const TASKS_KEY = '/api/tasks';
 
-export function useTasks(statusFilter?: TaskStatus) {
+export function useTasks(queryParams?: TaskQueryParams) {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Generate cache key from query params
+  const queryString = queryParams ? buildTaskQueryString(queryParams) : '';
+  const cacheKey = queryString ? `${TASKS_KEY}?${queryString}` : TASKS_KEY;
+
   const { data, error: fetchError, isLoading, mutate } = useSWR<TaskListResponse>(
-    statusFilter ? `${TASKS_KEY}?status=${statusFilter}` : TASKS_KEY,
-    () => apiClient.listTasks(statusFilter),
+    cacheKey,
+    () => apiClient.listTasks(queryParams),
     {
       revalidateOnFocus: false,
       dedupingInterval: 5000,
     }
   );
 
-  const createTask = useCallback(async (description: string, dueDate?: string | null): Promise<Task | null> => {
+  const createTask = useCallback(async (data: TaskCreateRequest): Promise<Task | null> => {
     setError(null);
     try {
-      const newTask = await apiClient.createTask(description, dueDate);
+      const newTask = await apiClient.createTask(data);
       await mutate();
       return newTask;
     } catch (err) {
@@ -88,11 +93,11 @@ export function useTasks(statusFilter?: TaskStatus) {
     }
   }, [mutate]);
 
-  const updateTask = useCallback(async (id: string, description: string): Promise<boolean> => {
+  const updateTask = useCallback(async (id: string, data: TaskUpdateRequest): Promise<boolean> => {
     setError(null);
     setIsUpdating(id);
     try {
-      await apiClient.updateTask(id, { description });
+      await apiClient.updateTask(id, data);
       await mutate();
       return true;
     } catch (err) {

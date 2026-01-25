@@ -1,0 +1,624 @@
+# Backend Service Event API Contract
+#
+# OpenAPI 3.0 specification for Backend Service event-related endpoints.
+# This extends the existing Backend API with event publishing and subscription.
+#
+# Branch: 009-dapr-event-driven
+# Date: 2026-01-20
+
+openapi: "3.0.3"
+info:
+  title: Todo Chatbot Backend Service - Event Extensions
+  version: "1.0.0"
+  description: |
+    Event-related extensions to the Backend Service API.
+    This service:
+    - Publishes task lifecycle events (TaskCreated, TaskUpdated, TaskCompleted, TaskDeleted)
+    - Subscribes to ReminderTriggered events from Scheduler
+    - Subscribes to RecurringTaskScheduled events from Scheduler
+    - Creates new task instances from recurring task events
+
+servers:
+  - url: http://backend-svc.todo-app.svc.cluster.local:8000
+    description: Kubernetes ClusterIP service
+
+paths:
+  # Dapr subscription configuration
+  /dapr/subscribe:
+    get:
+      operationId: getDaprSubscriptions
+      summary: Dapr subscription configuration
+      description: Returns list of Pub/Sub subscriptions for Dapr sidecar
+      tags:
+        - Dapr
+      responses:
+        "200":
+          description: Subscription configuration
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DaprSubscription"
+              example:
+                - pubsubname: pubsub
+                  topic: notifications
+                  route: /events/notifications
+                - pubsubname: pubsub
+                  topic: tasks
+                  route: /events/tasks
+                  match: type == "com.todo.recurring.scheduled"
+
+  # Event subscription endpoints
+  /events/notifications:
+    post:
+      operationId: handleNotificationEvent
+      summary: Handle notification events
+      description: |
+        Receives ReminderTriggered events from Scheduler service.
+        Updates task metadata and logs notification for user.
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudEvent"
+      responses:
+        "200":
+          description: Event processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+        "400":
+          description: Invalid event format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Event already processed (idempotency)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+
+  /events/tasks:
+    post:
+      operationId: handleTaskEvent
+      summary: Handle task events from Scheduler
+      description: |
+        Receives RecurringTaskScheduled events from Scheduler service.
+        Creates new task instances in the database.
+        Publishes TaskCreated event for the new instance.
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudEvent"
+      responses:
+        "200":
+          description: Event processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+        "400":
+          description: Invalid event format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Event already processed (idempotency)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+
+  # Extended Task API with event publishing
+  /api/tasks:
+    post:
+      operationId: createTask
+      summary: Create a new task
+      description: |
+        Creates a new task with optional priority, tags, reminders, and recurrence.
+        Publishes TaskCreated event after successful database commit.
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskCreateRequest"
+      responses:
+        "201":
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+          headers:
+            X-Event-Published:
+              schema:
+                type: boolean
+              description: Whether TaskCreated event was published
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      operationId: listTasks
+      summary: List tasks with filtering
+      description: |
+        Lists tasks for the authenticated user with optional filters.
+        Supports filtering by status, priority, tags, and due date range.
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, completed]
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [high, medium, low]
+        - name: tag
+          in: query
+          description: Filter by tag (can specify multiple)
+          schema:
+            type: array
+            items:
+              type: string
+        - name: due_before
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: due_after
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: search
+          in: query
+          description: Search in title and description
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [due_date, priority, created_at, title]
+            default: created_at
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskResponse"
+        "401":
+          description: Unauthorized
+
+  /api/tasks/{task_id}:
+    patch:
+      operationId: updateTask
+      summary: Update a task
+      description: |
+        Updates task fields. Publishes TaskUpdated event with changed fields.
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdateRequest"
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+          headers:
+            X-Event-Published:
+              schema:
+                type: boolean
+              description: Whether TaskUpdated event was published
+        "400":
+          description: Invalid request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task not found
+
+    delete:
+      operationId: deleteTask
+      summary: Delete a task
+      description: |
+        Deletes a task. Publishes TaskDeleted event.
+        Cascades to delete associated reminders and recurrence.
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Task deleted
+          headers:
+            X-Event-Published:
+              schema:
+                type: boolean
+              description: Whether TaskDeleted event was published
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task not found
+
+  /api/tasks/{task_id}/complete:
+    post:
+      operationId: completeTask
+      summary: Mark task as completed
+      description: |
+        Marks task as completed with completion timestamp.
+        Publishes TaskCompleted event.
+        Cancels any pending reminders for the task.
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Task completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+          headers:
+            X-Event-Published:
+              schema:
+                type: boolean
+              description: Whether TaskCompleted event was published
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task not found
+        "409":
+          description: Task already completed
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    DaprSubscription:
+      type: object
+      required:
+        - pubsubname
+        - topic
+        - route
+      properties:
+        pubsubname:
+          type: string
+          example: pubsub
+        topic:
+          type: string
+          example: notifications
+        route:
+          type: string
+          example: /events/notifications
+        match:
+          type: string
+          description: CEL expression for event filtering
+          example: type == "com.todo.recurring.scheduled"
+
+    CloudEvent:
+      type: object
+      required:
+        - specversion
+        - id
+        - source
+        - type
+        - time
+        - datacontenttype
+        - data
+      properties:
+        specversion:
+          type: string
+          const: "1.0"
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+        type:
+          type: string
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          type: string
+          const: application/json
+        data:
+          type: object
+
+    EventResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [processed, duplicate, error]
+        event_id:
+          type: string
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    TaskCreateRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          maxLength: 200
+          description: Task title
+        description:
+          type: string
+          maxLength: 2000
+          description: Detailed description
+        priority:
+          type: string
+          enum: [high, medium, low]
+          default: medium
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          default: []
+        due_date:
+          type: string
+          format: date-time
+        reminders:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReminderCreate"
+          maxItems: 5
+        recurrence:
+          $ref: "#/components/schemas/RecurrenceCreate"
+
+    ReminderCreate:
+      type: object
+      required:
+        - trigger_at
+      properties:
+        trigger_at:
+          type: string
+          format: date-time
+          description: When reminder should fire
+
+    RecurrenceCreate:
+      type: object
+      required:
+        - recurrence_type
+      properties:
+        recurrence_type:
+          type: string
+          enum: [daily, weekly, custom]
+        cron_expression:
+          type: string
+          maxLength: 100
+          description: Required if recurrence_type is custom
+
+    TaskUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+        priority:
+          type: string
+          enum: [high, medium, low]
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        reminders:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReminderCreate"
+          description: Replaces all existing reminders
+        recurrence:
+          $ref: "#/components/schemas/RecurrenceCreate"
+          nullable: true
+          description: Set to null to remove recurrence
+
+    TaskResponse:
+      type: object
+      required:
+        - id
+        - user_id
+        - title
+        - status
+        - priority
+        - tags
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+        priority:
+          type: string
+          enum: [high, medium, low]
+        tags:
+          type: array
+          items:
+            type: string
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        reminders:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReminderResponse"
+        recurrence:
+          $ref: "#/components/schemas/RecurrenceResponse"
+          nullable: true
+
+    ReminderResponse:
+      type: object
+      required:
+        - id
+        - trigger_at
+        - fired
+        - cancelled
+      properties:
+        id:
+          type: string
+          format: uuid
+        trigger_at:
+          type: string
+          format: date-time
+        fired:
+          type: boolean
+        cancelled:
+          type: boolean
+
+    RecurrenceResponse:
+      type: object
+      required:
+        - id
+        - recurrence_type
+        - active
+      properties:
+        id:
+          type: string
+          format: uuid
+        recurrence_type:
+          type: string
+          enum: [daily, weekly, custom]
+        cron_expression:
+          type: string
+          nullable: true
+        next_occurrence:
+          type: string
+          format: date-time
+          nullable: true
+        active:
+          type: boolean
+
+tags:
+  - name: Dapr
+    description: Dapr sidecar integration endpoints
+  - name: Events
+    description: Event subscription handlers
+  - name: Tasks
+    description: Task CRUD with event publishing

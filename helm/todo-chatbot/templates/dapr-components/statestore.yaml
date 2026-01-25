@@ -1,0 +1,17 @@
+{{- if and .Values.dapr.enabled .Values.redis.enabled }}
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: {{ .Values.dapr.components.statestore.name }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  type: {{ .Values.dapr.components.statestore.type }}
+  version: v1
+  metadata:
+    - name: redisHost
+      value: "redis-svc:{{ .Values.redis.service.port }}"
+    - name: redisPassword
+      value: ""
+    - name: actorStateStore
+      value: "false"
+{{- end }}

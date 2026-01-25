@@ -21,7 +21,11 @@ import type {
   TaskListResponse,
   Task,
   TaskStatus,
+  TaskCreateRequest,
+  TaskUpdateRequest,
+  TaskQueryParams,
 } from '@/types';
+import { buildTaskQueryString } from './utils';
 
 // In production (static export), use empty string to make requests relative to current origin
 // This allows nginx to proxy /api/* requests to the backend
@@ -196,19 +200,16 @@ class ApiClient {
   }
 
   // Task endpoints
-  async listTasks(statusFilter?: TaskStatus): Promise<TaskListResponse> {
-    const params = statusFilter ? '?status_filter=' + statusFilter : '';
+  async listTasks(queryParams?: TaskQueryParams): Promise<TaskListResponse> {
+    const queryString = queryParams ? buildTaskQueryString(queryParams) : '';
+    const params = queryString ? '?' + queryString : '';
     return this.request('/api/tasks' + params);
   }
 
-  async createTask(description: string, dueDate?: string | null): Promise<Task> {
-    const body: { description: string; due_date?: string } = { description };
-    if (dueDate) {
-      body.due_date = dueDate;
-    }
+  async createTask(data: TaskCreateRequest): Promise<Task> {
     return this.request('/api/tasks', {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify(data),
     });
   }
 
@@ -216,7 +217,7 @@ class ApiClient {
     return this.request('/api/tasks/' + id);
   }
 
-  async updateTask(id: string, data: { description?: string; status?: TaskStatus; due_date?: string | null }): Promise<Task> {
+  async updateTask(id: string, data: TaskUpdateRequest): Promise<Task> {
     return this.request('/api/tasks/' + id, {
       method: 'PATCH',
       body: JSON.stringify(data),

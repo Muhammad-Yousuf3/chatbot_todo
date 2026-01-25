@@ -251,43 +251,74 @@ class ToolExecutor:
         declarations = {
             "add_task": ToolDeclaration(
                 name="add_task",
-                description="Create a new task. Use when user wants to add, create, or remember something. Extract any mentioned due date.",
+                description="Create a new task with title, optional description, priority, tags, and due date. Use when user wants to add, create, or remember something.",
                 parameters={
                     "type": "object",
                     "properties": {
-                        "description": {"type": "string", "description": "Task description"},
+                        "title": {"type": "string", "description": "Task title (brief name, 1-200 chars)"},
+                        "description": {"type": "string", "description": "Optional detailed description (max 2000 chars)"},
+                        "priority": {
+                            "type": "string",
+                            "enum": ["high", "medium", "low"],
+                            "description": "Task priority. Default: 'medium'. Use 'high' for urgent tasks.",
+                        },
+                        "tags": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of tags for categorization (max 10 tags, each max 50 chars)",
+                        },
                         "due_date": {
                             "type": "string",
-                            "description": "Due date in ISO format (YYYY-MM-DD). Extract from user's message if mentioned (e.g., '15 January' becomes '2026-01-15', 'tomorrow' becomes tomorrow's date).",
+                            "description": "Due date in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS). Extract from user's message if mentioned.",
                         },
                     },
-                    "required": ["description"],
+                    "required": ["title"],
                 },
             ),
             "list_tasks": ToolDeclaration(
                 name="list_tasks",
-                description="Get user's tasks. Use when user wants to see, view, or list their tasks.",
+                description="Get user's tasks with filtering options. Use when user wants to see, view, or list their tasks. Returns tasks with title, description, priority, tags, due_date, reminders, and recurrence.",
                 parameters={
                     "type": "object",
                     "properties": {
                         "status": {
                             "type": "string",
-                            "enum": ["pending", "completed", "all"],
-                            "description": "Filter by status (default: all)",
-                        }
+                            "enum": ["pending", "completed"],
+                            "description": "Filter by status",
+                        },
+                        "priority": {
+                            "type": "string",
+                            "enum": ["high", "medium", "low"],
+                            "description": "Filter by priority",
+                        },
+                        "tag": {
+                            "type": "string",
+                            "description": "Filter by tag (tasks containing this tag)",
+                        },
                     },
                 },
             ),
             "update_task": ToolDeclaration(
                 name="update_task",
-                description="Update a task's description. Use when user wants to change, edit, or rename a task.",
+                description="Update a task's title, description, priority, or tags. Use when user wants to change, edit, or modify a task.",
                 parameters={
                     "type": "object",
                     "properties": {
                         "task_id": {"type": "string", "description": "Task ID to update"},
+                        "title": {"type": "string", "description": "New task title"},
                         "description": {"type": "string", "description": "New description"},
+                        "priority": {
+                            "type": "string",
+                            "enum": ["high", "medium", "low"],
+                            "description": "New priority level",
+                        },
+                        "tags": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "New list of tags (replaces existing)",
+                        },
                     },
-                    "required": ["task_id", "description"],
+                    "required": ["task_id"],
                 },
             ),
             "complete_task": ToolDeclaration(

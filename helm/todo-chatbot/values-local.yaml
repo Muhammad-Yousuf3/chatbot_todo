@@ -1,26 +1,31 @@
 # Minikube-specific configuration overrides
-# Usage: helm install todo-app ./helm/todo-chatbot -f helm/todo-chatbot/values-local.yaml
+# Usage: helm install todo-chatbot ./helm/todo-chatbot -f helm/todo-chatbot/values-local.yaml -n todo-chatbot --create-namespace
 
 global:
   namespace: "todo-chatbot"
-  imagePullPolicy: "IfNotPresent"
+  imagePullPolicy: "Never"  # Use local images built with minikube docker-env
 
+# Backend configuration
 backend:
+  enabled: true
+
   image:
     repository: "todo-backend"
-    tag: "dev"
+    tag: "local"
+    pullPolicy: "Never"
 
   replicas: 1
 
   config:
-    logLevel: "INFO"
+    logLevel: "DEBUG"
     frontendUrl: "http://todo-frontend:80"
 
   # REQUIRED: Fill in these values before deployment
+  # Or create secrets manually with kubectl (see quickstart.md)
   secrets:
-    databaseUrl: ""      # Your Neon PostgreSQL URL
-    jwtSecret: ""        # Your JWT signing secret
-    geminiApiKey: ""     # Your Gemini API key
+    databaseUrl: ""      # postgresql://user:pass@host:5432/dbname
+    jwtSecret: ""        # minimum 32 character secret
+    geminiApiKey: ""     # Google Gemini API key
 
   resources:
     requests:
@@ -30,16 +35,76 @@ backend:
       cpu: "500m"
       memory: "512Mi"
 
+  dapr:
+    enabled: true
+    appId: "backend"
+    appPort: 8000
+
+# Scheduler configuration
+scheduler:
+  enabled: true
+
+  image:
+    repository: "todo-scheduler"
+    tag: "local"
+    pullPolicy: "Never"
+
+  replicas: 1
+
+  config:
+    logLevel: "DEBUG"
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+  dapr:
+    enabled: true
+    appId: "scheduler"
+    appPort: 8001
+
+# Redis configuration
+redis:
+  enabled: true
+
+  image:
+    repository: "redis"
+    tag: "7-alpine"
+
+  service:
+    type: "ClusterIP"
+    port: 6379
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+  persistence:
+    enabled: false
+
+# Frontend configuration
 frontend:
+  enabled: true
+
   image:
     repository: "todo-frontend"
-    tag: "dev"
+    tag: "local"
+    pullPolicy: "Never"
 
   replicas: 1
 
   service:
     type: "NodePort"
     port: 80
+    nodePort: 30080  # Fixed NodePort for easy access
 
   config:
     apiUrl: "http://todo-backend:8000"
@@ -51,3 +116,28 @@ frontend:
     limits:
       cpu: "200m"
       memory: "128Mi"
+
+# Dapr components configuration
+dapr:
+  enabled: true
+
+  components:
+    pubsub:
+      name: "pubsub"
+      type: "pubsub.redis"
+
+    statestore:
+      name: "statestore"
+      type: "state.redis"
+
+    secrets:
+      name: "kubernetes-secrets"
+      type: "secretstores.kubernetes"
+
+    bindings:
+      recurring:
+        name: "recurring-task-trigger"
+        schedule: "@every 1m"  # Every minute for testing
+      reminders:
+        name: "reminder-check-trigger"
+        schedule: "@every 1m"  # Every minute for testing
