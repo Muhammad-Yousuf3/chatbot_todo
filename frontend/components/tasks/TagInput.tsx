@@ -3,6 +3,7 @@
 /**
  * TagInput Component
  * Feature: 010-ui-enablement
+ * Updated: 011-midnight-glass-ui - Glass styling and accent gradient chips
  *
  * Allows users to add and remove tags with chip display.
  * Enforces validation: max 10 tags, each max 50 characters.
@@ -84,20 +85,20 @@ export function TagInput({
   return (
     <div className="space-y-2">
       <div className="flex flex-col gap-2">
-        {/* Tag chips display */}
+        {/* Tag chips display - Midnight glass with accent gradient */}
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {tags.map((tag, idx) => (
               <span
                 key={idx}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-sm bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 rounded-full"
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-sm bg-gradient-to-r from-primary-400/20 to-primary-600/20 text-primary-300 rounded-full border border-primary-400/30 backdrop-blur-sm"
               >
                 <span>#{tag}</span>
                 <button
                   type="button"
                   onClick={() => handleRemoveTag(tag)}
                   disabled={disabled}
-                  className="hover:bg-primary-200 dark:hover:bg-primary-800/50 rounded-full p-0.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="hover:bg-primary-400/30 rounded-full p-0.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label={`Remove tag ${tag}`}
                 >
                   <svg
@@ -119,7 +120,7 @@ export function TagInput({
           </div>
         )}
 
-        {/* Input field */}
+        {/* Input field - Glass styling */}
         <div className="flex gap-2">
           <input
             type="text"
@@ -133,13 +134,9 @@ export function TagInput({
             }
             disabled={disabled || tags.length >= maxTags}
             className={cn(
-              'flex-1 px-3 py-2 border rounded-lg text-sm',
-              'text-slate-800 dark:text-white dark:bg-dark-700',
-              'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-              'placeholder:text-slate-400 dark:placeholder:text-slate-500',
+              'flex-1 input-glass',
               'disabled:opacity-50 disabled:cursor-not-allowed',
-              (error || inputError) && 'border-error-500 dark:border-error-500',
-              !(error || inputError) && 'border-slate-300 dark:border-dark-600'
+              (error || inputError) && 'border-error-500/50 focus:ring-error-500/50'
             )}
           />
           <button
@@ -147,10 +144,10 @@ export function TagInput({
             onClick={handleAddTag}
             disabled={disabled || !inputValue.trim() || tags.length >= maxTags}
             className={cn(
-              'px-3 py-2 text-sm font-medium rounded-lg transition-colors',
-              'bg-primary-100 text-primary-700 hover:bg-primary-200',
-              'dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-800/50',
-              'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-100 dark:disabled:hover:bg-primary-900/30'
+              'px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+              'bg-gradient-to-r from-primary-400 to-primary-600 text-white',
+              'hover:from-primary-500 hover:to-primary-700 hover:shadow-glow',
+              'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none'
             )}
           >
             Add
@@ -167,7 +164,7 @@ export function TagInput({
 
       {/* Help text */}
       {!error && !inputError && (
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-dark-400">
           {tags.length}/{maxTags} tags • Press Enter to add • Backspace to remove last tag
         </p>
       )}

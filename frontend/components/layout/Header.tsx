@@ -3,22 +3,22 @@
 /**
  * Header Component with navigation
  * Feature: 006-frontend-chat-ui
+ * Updated: 011-midnight-glass-ui - Glass header with accent highlights
  *
- * Includes mobile menu, theme toggle, and keyboard navigation support.
+ * Includes mobile menu and keyboard navigation support.
+ * Theme toggle hidden (dark mode only).
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 
 export function Header() {
   const pathname = usePathname();
   const { isAuthenticated, user, logout } = useAuthContext();
-  const { resolvedTheme, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navLinks = [
@@ -55,16 +55,16 @@ export function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-white dark:bg-dark-900 border-b border-slate-200 dark:border-dark-700 transition-colors">
+    <header className="sticky top-0 z-50 glass border-b border-dark-600 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+          {/* Logo - Accent gradient */}
           <Link
             href="/"
-            className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg"
+            className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-400/50 focus:ring-offset-2 focus:ring-offset-dark-900 rounded-lg"
             aria-label="AI Todo Agent - Go to homepage"
           >
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-primary-400 to-primary-600 rounded-lg flex items-center justify-center shadow-glow">
               <svg
                 className="w-5 h-5 text-white"
                 fill="none"
@@ -80,23 +80,23 @@ export function Header() {
                 />
               </svg>
             </div>
-            <span className="text-lg font-semibold text-slate-800 dark:text-white">
+            <span className="text-lg font-semibold text-dark-50">
               AI Todo Agent
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Glass highlight on active */}
           <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label="Main navigation">
             {filteredLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+                  'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                  'focus:outline-none focus:ring-2 focus:ring-primary-400/50 focus:ring-offset-2 focus:ring-offset-dark-900',
                   pathname === link.href
-                    ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-700'
+                    ? 'bg-gradient-to-r from-primary-400/20 to-primary-600/20 text-primary-300 border border-primary-400/30'
+                    : 'text-dark-300 hover:text-dark-50 hover:bg-dark-700/50'
                 )}
                 aria-current={pathname === link.href ? 'page' : undefined}
               >
@@ -107,33 +107,12 @@ export function Header() {
 
           {/* Auth Section & Mobile Menu Button */}
           <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className={cn(
-                'p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-700',
-                'focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors'
-              )}
-              aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {resolvedTheme === 'dark' ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-              )}
-            </button>
-
             {/* Mobile Menu Button */}
             <button
               type="button"
               className={cn(
-                'md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100',
-                'focus:outline-none focus:ring-2 focus:ring-primary-500'
+                'md:hidden p-2 rounded-lg text-dark-300 hover:text-dark-50 hover:bg-dark-700/50',
+                'focus:outline-none focus:ring-2 focus:ring-primary-400/50 transition-all duration-200'
               )}
               onClick={toggleMobileMenu}
               aria-expanded={isMobileMenuOpen}
@@ -167,7 +146,7 @@ export function Header() {
 
             {isAuthenticated ? (
               <>
-                <span className="hidden sm:block text-sm text-slate-600 dark:text-slate-400">
+                <span className="hidden sm:block text-sm text-dark-300">
                   {user?.displayName}
                 </span>
                 <Button
@@ -190,11 +169,11 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Glass panel */}
       <div
         id="mobile-menu"
         className={cn(
-          'md:hidden border-t border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-900',
+          'md:hidden border-t border-dark-600 glass-subtle',
           isMobileMenuOpen ? 'block' : 'hidden'
         )}
         role="navigation"
@@ -206,11 +185,11 @@ export function Header() {
               key={link.href}
               href={link.href}
               className={cn(
-                'block px-3 py-2 rounded-lg text-base font-medium transition-colors',
-                'focus:outline-none focus:ring-2 focus:ring-primary-500',
+                'block px-3 py-2 rounded-lg text-base font-medium transition-all duration-200',
+                'focus:outline-none focus:ring-2 focus:ring-primary-400/50',
                 pathname === link.href
-                  ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-700'
+                  ? 'bg-gradient-to-r from-primary-400/20 to-primary-600/20 text-primary-300 border border-primary-400/30'
+                  : 'text-dark-300 hover:text-dark-50 hover:bg-dark-700/50'
               )}
               aria-current={pathname === link.href ? 'page' : undefined}
             >
@@ -220,7 +199,7 @@ export function Header() {
           {!isAuthenticated && (
             <Link
               href="/login"
-              className="block px-3 py-2 rounded-lg text-base font-medium text-primary-600 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="block px-3 py-2 rounded-lg text-base font-medium text-primary-400 hover:bg-primary-400/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400/50"
             >
               Login
             </Link>

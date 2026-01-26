@@ -3,6 +3,7 @@
 /**
  * Toast Notification Component
  * Feature: 010-ui-enablement (Phase 9 - Polish)
+ * Updated: 011-midnight-glass-ui - Glass effect and Midnight colors
  *
  * Simple toast notification for success/error messages.
  */
@@ -30,10 +31,11 @@ export function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
   return (
     <div
       className={cn(
-        'fixed bottom-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border animate-slide-up',
-        type === 'success' && 'bg-success-50 border-success-200 text-success-800 dark:bg-success-900/20 dark:border-success-800 dark:text-success-200',
-        type === 'error' && 'bg-error-50 border-error-200 text-error-800 dark:bg-error-900/20 dark:border-error-800 dark:text-error-200',
-        type === 'info' && 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-200'
+        'fixed bottom-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg animate-slide-up',
+        'glass backdrop-blur-xl',
+        type === 'success' && 'border-success-500/30 text-success-400',
+        type === 'error' && 'border-error-500/30 text-error-400',
+        type === 'info' && 'border-primary-400/30 text-primary-400'
       )}
       role="alert"
       aria-live="polite"
@@ -41,32 +43,32 @@ export function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
       {/* Icon */}
       <div className="flex-shrink-0">
         {type === 'success' && (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         )}
         {type === 'error' && (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-error-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         )}
         {type === 'info' && (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         )}
       </div>
 
       {/* Message */}
-      <p className="text-sm font-medium">{message}</p>
+      <p className="text-sm font-medium text-dark-100">{message}</p>
 
       {/* Close Button */}
       <button
         onClick={onClose}
-        className="flex-shrink-0 p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+        className="flex-shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
         aria-label="Close notification"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-dark-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>

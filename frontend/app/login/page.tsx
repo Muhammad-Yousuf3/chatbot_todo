@@ -3,6 +3,7 @@
 /**
  * Login Page - Mock Authentication
  * Feature: 006-frontend-chat-ui
+ * Updated: 011-midnight-glass-ui - Glass card and input styling
  *
  * For hackathon MVP - accepts any email/password.
  * Creates a local session with UUID.
@@ -101,7 +102,7 @@ export default function LoginPage() {
   if (isLoading) {
     return (
       <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-400" />
       </div>
     );
   }
@@ -109,12 +110,12 @@ export default function LoginPage() {
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-12">
       <Container className="max-w-md w-full">
-        <Card className="p-8">
+        <Card variant="glass" className="p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/50 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-12 h-12 glass rounded-xl flex items-center justify-center mx-auto mb-4 shadow-glow">
               <svg
-                className="w-6 h-6 text-primary-600 dark:text-primary-400"
+                className="w-6 h-6 text-primary-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -127,14 +128,14 @@ export default function LoginPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome back</h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">Sign in to continue to AI Todo Agent</p>
+            <h1 className="text-2xl font-bold text-dark-50">Welcome back</h1>
+            <p className="text-dark-400 mt-2">Sign in to continue to AI Todo Agent</p>
           </div>
 
           {/* General Error */}
           {errors.general && (
-            <div className="mb-6 p-3 bg-error-50 border border-error-200 rounded-lg">
-              <p className="text-sm text-error-700">{errors.general}</p>
+            <div className="mb-6 p-3 glass-subtle border border-error-500/30 rounded-lg">
+              <p className="text-sm text-error-400">{errors.general}</p>
             </div>
           )}
 
@@ -144,7 +145,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                className="block text-sm font-medium text-dark-300 mb-1.5"
               >
                 Email address
               </label>
@@ -161,17 +162,13 @@ export default function LoginPage() {
                 placeholder="you@example.com"
                 autoComplete="email"
                 className={cn(
-                  'w-full px-4 py-2.5 rounded-lg border text-slate-800 dark:text-white dark:bg-dark-700',
-                  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-                  'placeholder:text-slate-400 dark:placeholder:text-slate-500',
-                  errors.email
-                    ? 'border-error-300 bg-error-50 dark:bg-error-900/20'
-                    : 'border-slate-300 dark:border-dark-600'
+                  'w-full input-glass',
+                  errors.email && 'border-error-500/50 focus:ring-error-500/50'
                 )}
                 disabled={isSubmitting}
               />
               {errors.email && (
-                <p className="mt-1.5 text-sm text-error-600">{errors.email}</p>
+                <p className="mt-1.5 text-sm text-error-400">{errors.email}</p>
               )}
             </div>
 
@@ -179,7 +176,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                className="block text-sm font-medium text-dark-300 mb-1.5"
               >
                 Password
               </label>
@@ -196,17 +193,13 @@ export default function LoginPage() {
                 placeholder="Enter your password"
                 autoComplete="current-password"
                 className={cn(
-                  'w-full px-4 py-2.5 rounded-lg border text-slate-800 dark:text-white dark:bg-dark-700',
-                  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-                  'placeholder:text-slate-400 dark:placeholder:text-slate-500',
-                  errors.password
-                    ? 'border-error-300 bg-error-50 dark:bg-error-900/20'
-                    : 'border-slate-300 dark:border-dark-600'
+                  'w-full input-glass',
+                  errors.password && 'border-error-500/50 focus:ring-error-500/50'
                 )}
                 disabled={isSubmitting}
               />
               {errors.password && (
-                <p className="mt-1.5 text-sm text-error-600">{errors.password}</p>
+                <p className="mt-1.5 text-sm text-error-400">{errors.password}</p>
               )}
             </div>
 
@@ -224,11 +217,11 @@ export default function LoginPage() {
 
           {/* Sign Up Link */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-dark-400">
               Don&apos;t have an account?{' '}
               <Link
                 href="/signup"
-                className="text-primary-600 hover:text-primary-700 font-medium"
+                className="text-primary-400 hover:text-primary-300 font-medium transition-colors"
               >
                 Sign up
               </Link>
@@ -239,7 +232,7 @@ export default function LoginPage() {
           <div className="mt-4 text-center">
             <Link
               href="/"
-              className="text-sm text-slate-500 hover:text-slate-600"
+              className="text-sm text-dark-400 hover:text-dark-200 transition-colors"
             >
               Back to home
             </Link>

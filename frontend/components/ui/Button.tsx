@@ -3,6 +3,7 @@
 /**
  * Button Component with variants
  * Feature: 006-frontend-chat-ui
+ * Updated: 011-midnight-glass-ui - Accent gradient and glow effects
  */
 
 import React, { ButtonHTMLAttributes, forwardRef } from 'react';
@@ -20,15 +21,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600',
+    'bg-gradient-to-r from-primary-400 to-primary-600 text-white hover:from-primary-500 hover:to-primary-700 active:from-primary-600 active:to-primary-800 focus:ring-primary-400 shadow-glow hover:shadow-glow-lg transition-shadow',
   secondary:
-    'bg-slate-100 text-slate-700 hover:bg-slate-200 active:bg-slate-300 focus:ring-slate-500 dark:bg-dark-700 dark:text-slate-200 dark:hover:bg-dark-600',
+    'bg-dark-700 text-dark-100 hover:bg-dark-600 active:bg-dark-500 focus:ring-dark-500 border border-dark-600',
   outline:
-    'border-2 border-slate-300 text-slate-700 hover:bg-slate-50 active:bg-slate-100 focus:ring-slate-500 dark:border-dark-600 dark:text-slate-300 dark:hover:bg-dark-700',
+    'border-2 border-primary-400/50 text-primary-400 hover:bg-primary-400/10 active:bg-primary-400/20 focus:ring-primary-400',
   ghost:
-    'text-slate-700 hover:bg-slate-100 active:bg-slate-200 focus:ring-slate-500 dark:text-slate-300 dark:hover:bg-dark-700',
+    'text-dark-200 hover:bg-dark-700 active:bg-dark-600 focus:ring-dark-500',
   danger:
-    'bg-error-600 text-white hover:bg-error-700 active:bg-error-800 focus:ring-error-500',
+    'bg-error-500 text-white hover:bg-error-600 active:bg-error-700 focus:ring-error-500',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -56,9 +57,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={cn(
           'inline-flex items-center justify-center font-medium rounded-lg',
-          'transition-colors duration-150',
-          'focus:outline-none focus:ring-2 focus:ring-offset-2',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
+          'transition-all duration-200 ease-out',
+          'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900',
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none',
           variantStyles[variant],
           sizeStyles[size],
           fullWidth && 'w-full',

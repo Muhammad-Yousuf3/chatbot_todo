@@ -3,6 +3,7 @@
 /**
  * Chat Container Component
  * Feature: 006-frontend-chat-ui
+ * Updated: 011-midnight-glass-ui - Glass panels, accent bubbles, typing indicator
  *
  * Custom chat interface following ChatKit patterns.
  * Can be replaced with @openai/chatkit-react when available.
@@ -144,14 +145,14 @@ export function ChatContainer({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex flex-col h-full bg-dark-900">
+      {/* Messages Area - Glass container */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 glass rounded-full flex items-center justify-center mb-4 shadow-glow">
               <svg
-                className="w-8 h-8 text-primary-600"
+                className="w-8 h-8 text-primary-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -164,10 +165,10 @@ export function ChatContainer({
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-slate-800 mb-2">
+            <h3 className="text-lg font-medium text-dark-50 mb-2">
               Start a conversation
             </h3>
-            <p className="text-sm text-slate-500 max-w-sm">
+            <p className="text-sm text-dark-400 max-w-sm">
               Ask me to help manage your tasks. Try &quot;Add a task to buy groceries&quot;
               or &quot;Show me my tasks&quot;.
             </p>
@@ -182,12 +183,12 @@ export function ChatContainer({
           />
         ))}
 
-        {/* Thinking indicator */}
+        {/* Thinking indicator - Midnight glass with accent typing dots */}
         {isSending && (
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 glass rounded-full flex items-center justify-center flex-shrink-0">
               <svg
-                className="w-4 h-4 text-primary-600"
+                className="w-4 h-4 text-primary-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -200,17 +201,11 @@ export function ChatContainer({
                 />
               </svg>
             </div>
-            <div className="bg-slate-100 rounded-2xl rounded-tl-md px-4 py-3">
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
-                <span
-                  className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
-                  style={{ animationDelay: '0.1s' }}
-                />
-                <span
-                  className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
-                  style={{ animationDelay: '0.2s' }}
-                />
+            <div className="glass-subtle rounded-2xl rounded-tl-md px-4 py-3">
+              <div className="flex items-center gap-1.5">
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+                <span className="typing-dot" />
               </div>
             </div>
           </div>
@@ -219,15 +214,15 @@ export function ChatContainer({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Error message */}
+      {/* Error message - Glass with error accent */}
       {error && (
-        <div className="px-4 py-2 bg-error-50 border-t border-error-200">
-          <p className="text-sm text-error-700">{error}</p>
+        <div className="px-4 py-2 glass-subtle border-t border-error-500/30">
+          <p className="text-sm text-error-400">{error}</p>
         </div>
       )}
 
-      {/* Input Area */}
-      <div className="border-t border-slate-200 p-4">
+      {/* Input Area - Glass panel */}
+      <div className="border-t border-dark-600 p-4 glass">
         <form onSubmit={handleSubmit} className="flex gap-3">
           <textarea
             ref={inputRef}
@@ -237,10 +232,8 @@ export function ChatContainer({
             placeholder="Type your message..."
             rows={1}
             className={cn(
-              'flex-1 resize-none rounded-lg border border-slate-300 px-4 py-3',
-              'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-              'placeholder:text-slate-400 text-slate-800',
-              'disabled:bg-slate-50 disabled:cursor-not-allowed'
+              'flex-1 resize-none input-glass',
+              'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
             disabled={isSending}
           />
@@ -253,7 +246,7 @@ export function ChatContainer({
             Send
           </Button>
         </form>
-        <p className="text-xs text-slate-400 mt-2 text-center">
+        <p className="text-xs text-dark-400 mt-2 text-center">
           Press Enter to send, Shift+Enter for new line
         </p>
       </div>
@@ -261,7 +254,7 @@ export function ChatContainer({
   );
 }
 
-// Message Bubble Component
+// Message Bubble Component - Midnight Glass styling
 function MessageBubble({
   message,
   onRetry,
@@ -284,16 +277,16 @@ function MessageBubble({
         isUser && 'flex-row-reverse'
       )}
     >
-      {/* Avatar */}
+      {/* Avatar - Glass style */}
       <div
         className={cn(
           'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-          isUser ? 'bg-slate-200' : 'bg-primary-100'
+          isUser ? 'bg-dark-700' : 'glass'
         )}
       >
         {isUser ? (
           <svg
-            className="w-4 h-4 text-slate-600"
+            className="w-4 h-4 text-dark-300"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -307,7 +300,7 @@ function MessageBubble({
           </svg>
         ) : (
           <svg
-            className="w-4 h-4 text-primary-600"
+            className="w-4 h-4 text-primary-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -322,16 +315,16 @@ function MessageBubble({
         )}
       </div>
 
-      {/* Message Content */}
+      {/* Message Content - Glass bubbles */}
       <div className={cn('max-w-[70%] space-y-1', isUser && 'text-right')}>
         <div
           className={cn(
-            'rounded-2xl px-4 py-3',
+            'rounded-2xl px-4 py-3 transition-all duration-200',
             isUser
-              ? 'bg-primary-600 text-white rounded-tr-md'
-              : 'bg-slate-100 text-slate-800 rounded-tl-md',
+              ? 'bg-gradient-to-r from-primary-400 to-primary-600 text-white rounded-tr-md shadow-glow'
+              : 'glass-subtle text-dark-100 rounded-tl-md',
             message.isPending && 'opacity-70',
-            message.hasError && 'border-2 border-error-300'
+            message.hasError && 'border-2 border-error-500/50'
           )}
         >
           <p className="whitespace-pre-wrap">{message.content}</p>
@@ -340,17 +333,17 @@ function MessageBubble({
         {/* Metadata */}
         <div
           className={cn(
-            'flex items-center gap-2 text-xs text-slate-400',
+            'flex items-center gap-2 text-xs text-dark-400',
             isUser && 'justify-end'
           )}
         >
           {message.isPending && <span>Sending...</span>}
           {message.hasError && (
             <>
-              <span className="text-error-500">{message.errorMessage}</span>
+              <span className="text-error-400">{message.errorMessage}</span>
               <button
                 onClick={onRetry}
-                className="text-primary-600 hover:text-primary-700 underline"
+                className="text-primary-400 hover:text-primary-300 underline transition-colors"
               >
                 Retry
               </button>
@@ -361,16 +354,16 @@ function MessageBubble({
           )}
         </div>
 
-        {/* Tool Calls (collapsed by default) */}
+        {/* Tool Calls (collapsed by default) - Glass panel */}
         {hasToolCalls && (
           <div className="mt-2">
             <button
               onClick={() => setShowToolCalls(!showToolCalls)}
-              className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1"
+              className="text-xs text-dark-400 hover:text-primary-400 flex items-center gap-1 transition-colors"
             >
               <svg
                 className={cn(
-                  'w-3 h-3 transition-transform',
+                  'w-3 h-3 transition-transform duration-200',
                   showToolCalls && 'rotate-90'
                 )}
                 fill="none"
@@ -387,7 +380,7 @@ function MessageBubble({
               Tool calls
             </button>
             {showToolCalls && (
-              <div className="mt-1 p-2 bg-slate-50 rounded text-xs text-slate-600 font-mono">
+              <div className="mt-1 p-2 glass-subtle rounded text-xs text-dark-300 font-mono">
                 {message.content}
               </div>
             )}

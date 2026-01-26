@@ -3,6 +3,7 @@
 /**
  * DateTimePicker Component
  * Feature: 010-ui-enablement
+ * Updated: 011-midnight-glass-ui - Glass input styling with focus glow
  *
  * HTML5 datetime-local input for selecting date and time.
  * Handles conversion between ISO 8601 UTC and browser local timezone.
@@ -77,8 +78,8 @@ export function DateTimePicker({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
-        <label className="text-sm text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <label className="text-sm text-dark-300 font-medium flex items-center gap-1.5">
+          <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -87,10 +88,10 @@ export function DateTimePicker({
             />
           </svg>
           {label}
-          {!required && <span className="text-xs text-slate-400">(optional)</span>}
+          {!required && <span className="text-xs text-dark-500">(optional)</span>}
         </label>
         {showTimezone && (
-          <span className="text-xs text-slate-400 dark:text-slate-500">
+          <span className="text-xs text-dark-500">
             {timezone}
           </span>
         )}
@@ -104,20 +105,16 @@ export function DateTimePicker({
           disabled={disabled}
           required={required}
           className={cn(
-            'flex-1 px-3 py-2 border rounded-lg text-sm',
-            'text-slate-800 dark:text-white dark:bg-dark-700',
-            'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+            'flex-1 input-glass',
             'disabled:opacity-50 disabled:cursor-not-allowed',
-            error
-              ? 'border-error-500 dark:border-error-500'
-              : 'border-slate-300 dark:border-dark-600'
+            error && 'border-error-500/50 focus:ring-error-500/50'
           )}
         />
         {localValue && !disabled && (
           <button
             type="button"
             onClick={handleClear}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
+            className="p-2 text-dark-400 hover:text-error-400 hover:bg-error-500/10 rounded-lg transition-all duration-200"
             aria-label="Clear date and time"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +130,7 @@ export function DateTimePicker({
       </div>
 
       {error && (
-        <p className="text-xs text-error-500 dark:text-error-400">{error}</p>
+        <p className="text-xs text-error-400">{error}</p>
       )}
     </div>
   );

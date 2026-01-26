@@ -3,6 +3,7 @@
 /**
  * Skeleton Loader Component
  * Feature: 006-frontend-chat-ui
+ * Updated: 011-midnight-glass-ui - Midnight surface colors
  */
 
 import React, { HTMLAttributes } from 'react';
@@ -31,7 +32,7 @@ export function Skeleton({
   return (
     <div
       className={cn(
-        'animate-pulse bg-slate-200',
+        'animate-pulse bg-dark-700',
         variantStyles[variant],
         className
       )}
@@ -70,16 +71,16 @@ export function SkeletonText({
 }
 
 /**
- * Pre-built skeleton for cards
+ * Pre-built skeleton for cards - Midnight glass style
  */
 export function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={cn('p-4 border border-slate-200 rounded-lg', className)}>
-      <Skeleton height={20} width="40%" className="mb-3" />
+    <div className={cn('p-4 rounded-xl glass', className)}>
+      <Skeleton height={20} width="40%" className="mb-3 bg-dark-600" />
       <SkeletonText lines={2} />
       <div className="flex gap-2 mt-4">
-        <Skeleton height={32} width={80} />
-        <Skeleton height={32} width={80} />
+        <Skeleton height={32} width={80} className="bg-dark-600" />
+        <Skeleton height={32} width={80} className="bg-dark-600" />
       </div>
     </div>
   );
@@ -100,7 +101,7 @@ export function SkeletonAvatar({
       variant="circular"
       width={size}
       height={size}
-      className={className}
+      className={cn('bg-dark-600', className)}
     />
   );
 }

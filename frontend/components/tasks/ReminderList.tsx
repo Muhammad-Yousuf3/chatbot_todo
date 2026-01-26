@@ -3,6 +3,7 @@
 /**
  * ReminderList Component
  * Feature: 010-ui-enablement
+ * Updated: 011-midnight-glass-ui - Glass card styling for reminder items
  *
  * Manages multiple reminder times for a task (max 5).
  * Displays help text explaining reminders are scheduled but not delivered.
@@ -73,7 +74,7 @@ export function ReminderList({
     <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <label className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+        <label className="text-sm text-dark-300 font-medium">
           Reminders ({reminders.length}/{maxReminders})
         </label>
         <button
@@ -81,10 +82,10 @@ export function ReminderList({
           onClick={handleAddReminder}
           disabled={disabled || reminders.length >= maxReminders}
           className={cn(
-            'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
-            'bg-primary-100 text-primary-700 hover:bg-primary-200',
-            'dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-800/50',
-            'disabled:opacity-50 disabled:cursor-not-allowed'
+            'px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200',
+            'bg-gradient-to-r from-primary-400 to-primary-600 text-white',
+            'hover:from-primary-500 hover:to-primary-700 hover:shadow-glow',
+            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none'
           )}
         >
           <span className="flex items-center gap-1">
@@ -96,14 +97,14 @@ export function ReminderList({
         </button>
       </div>
 
-      {/* Help Text */}
-      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+      {/* Help Text - Glass panel with info accent */}
+      <div className="p-3 glass-subtle rounded-lg border-l-2 border-primary-400">
         <div className="flex gap-2">
-          <svg className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-primary-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <div className="text-xs text-blue-700 dark:text-blue-300">
-            <p className="font-medium mb-1">Reminders are scheduled but not delivered</p>
+          <div className="text-xs text-dark-300">
+            <p className="font-medium mb-1 text-dark-100">Reminders are scheduled but not delivered</p>
             <p>
               This feature stores reminder times in the database for future notification integration.
               No alerts or emails will be sent at this time.
@@ -112,7 +113,7 @@ export function ReminderList({
         </div>
       </div>
 
-      {/* Reminder List */}
+      {/* Reminder List - Glass cards */}
       {reminders.length > 0 && (
         <div className="space-y-3">
           {reminders.map((reminder, index) => {
@@ -120,16 +121,16 @@ export function ReminderList({
             return (
               <div
                 key={index}
-                className="p-3 bg-slate-50 dark:bg-dark-700 border border-slate-200 dark:border-dark-600 rounded-lg"
+                className="p-3 glass-subtle rounded-lg"
               >
                 <div className="flex items-start gap-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                      <span className="text-xs font-medium text-dark-300">
                         Reminder {index + 1}
                       </span>
                       {afterDueDate && (
-                        <span className="text-xs text-warning-600 dark:text-warning-400 flex items-center gap-1">
+                        <span className="text-xs text-warning-400 flex items-center gap-1">
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                           </svg>
@@ -150,7 +151,7 @@ export function ReminderList({
                     type="button"
                     onClick={() => handleRemoveReminder(index)}
                     disabled={disabled}
-                    className="mt-6 p-1.5 text-slate-400 hover:text-error-500 hover:bg-error-50 dark:hover:bg-error-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="mt-6 p-1.5 text-dark-400 hover:text-error-400 hover:bg-error-500/10 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label={`Remove reminder ${index + 1}`}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,10 +165,10 @@ export function ReminderList({
         </div>
       )}
 
-      {/* Empty State */}
+      {/* Empty State - Glass dashed border */}
       {reminders.length === 0 && (
-        <div className="p-4 text-center border-2 border-dashed border-slate-200 dark:border-dark-600 rounded-lg">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+        <div className="p-4 text-center border-2 border-dashed border-dark-600 rounded-lg">
+          <p className="text-sm text-dark-400">
             No reminders yet. Click "Add Reminder" to schedule a notification time.
           </p>
         </div>
@@ -175,12 +176,12 @@ export function ReminderList({
 
       {/* Validation Error */}
       {error && (
-        <p className="text-xs text-error-500 dark:text-error-400">{error}</p>
+        <p className="text-xs text-error-400">{error}</p>
       )}
 
       {/* Max Limit Info */}
       {reminders.length >= maxReminders && (
-        <p className="text-xs text-warning-600 dark:text-warning-400">
+        <p className="text-xs text-warning-400">
           Maximum {maxReminders} reminders per task
         </p>
       )}

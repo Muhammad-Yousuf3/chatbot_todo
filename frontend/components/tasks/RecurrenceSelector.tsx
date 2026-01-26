@@ -3,6 +3,7 @@
 /**
  * RecurrenceSelector Component
  * Feature: 010-ui-enablement
+ * Updated: 011-midnight-glass-ui - Glass buttons with gradient selection
  *
  * Allows users to configure task recurrence (daily, weekly, or custom cron expression).
  * Displays help text with cron expression examples.
@@ -56,7 +57,7 @@ export function RecurrenceSelector({
     <div className="space-y-3">
       {/* Recurrence Type Selection */}
       <div>
-        <label className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-2 block">
+        <label className="text-sm text-dark-300 font-medium mb-2 block">
           Recurrence
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -67,17 +68,20 @@ export function RecurrenceSelector({
               onClick={() => handleTypeChange(option.value)}
               disabled={disabled}
               className={cn(
-                'p-3 border rounded-lg text-left transition-colors',
+                'p-3 rounded-lg text-left transition-all duration-200',
                 recurrenceType === option.value
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 dark:border-primary-600'
-                  : 'border-slate-300 dark:border-dark-600 hover:bg-slate-50 dark:hover:bg-dark-700',
+                  ? 'bg-gradient-to-r from-primary-400/20 to-primary-600/20 border border-primary-400/50 shadow-glow'
+                  : 'glass-subtle hover:bg-dark-700/50',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
-              <div className="font-medium text-sm text-slate-800 dark:text-white">
+              <div className={cn(
+                'font-medium text-sm',
+                recurrenceType === option.value ? 'text-primary-300' : 'text-dark-100'
+              )}>
                 {option.label}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <div className="text-xs text-dark-400 mt-0.5">
                 {option.description}
               </div>
             </button>
@@ -89,13 +93,13 @@ export function RecurrenceSelector({
       {recurrenceType === 'custom' && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label htmlFor="cron-expression" className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+            <label htmlFor="cron-expression" className="text-sm text-dark-300 font-medium">
               Cron Expression
             </label>
             <button
               type="button"
               onClick={() => setShowCronHelp(!showCronHelp)}
-              className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+              className="text-xs text-primary-400 hover:text-primary-300 transition-colors"
             >
               {showCronHelp ? 'Hide' : 'Show'} examples
             </button>
@@ -109,41 +113,36 @@ export function RecurrenceSelector({
             placeholder="0 9 * * *"
             disabled={disabled}
             className={cn(
-              'w-full px-3 py-2 border rounded-lg text-sm font-mono',
-              'text-slate-800 dark:text-white dark:bg-dark-700',
-              'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-              'placeholder:text-slate-400 dark:placeholder:text-slate-500',
+              'w-full input-glass font-mono',
               'disabled:opacity-50 disabled:cursor-not-allowed',
-              error
-                ? 'border-error-500 dark:border-error-500'
-                : 'border-slate-300 dark:border-dark-600'
+              error && 'border-error-500/50 focus:ring-error-500/50'
             )}
           />
 
           {error && (
-            <p className="text-xs text-error-500 dark:text-error-400">{error}</p>
+            <p className="text-xs text-error-400">{error}</p>
           )}
 
-          {/* Cron Help Text */}
+          {/* Cron Help Text - Glass panel */}
           {showCronHelp && (
-            <div className="p-3 bg-slate-50 dark:bg-dark-700 border border-slate-200 dark:border-dark-600 rounded-lg">
-              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            <div className="p-3 glass-subtle rounded-lg">
+              <p className="text-xs font-semibold text-dark-200 mb-2">
                 Cron Expression Format: minute hour day month weekday
               </p>
               <div className="space-y-1.5">
                 {cronExamples.map((example, idx) => (
                   <div key={idx} className="flex items-start gap-2">
-                    <code className="text-xs font-mono text-primary-600 dark:text-primary-400 bg-white dark:bg-dark-800 px-2 py-0.5 rounded flex-shrink-0">
+                    <code className="text-xs font-mono text-primary-400 bg-dark-800/50 px-2 py-0.5 rounded flex-shrink-0">
                       {example.expression}
                     </code>
-                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                    <span className="text-xs text-dark-400">
                       {example.description}
                     </span>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                Use <a href="https://crontab.guru" target="_blank" rel="noopener noreferrer" className="text-primary-600 dark:text-primary-400 hover:underline">crontab.guru</a> for help creating cron expressions
+              <p className="text-xs text-dark-500 mt-2">
+                Use <a href="https://crontab.guru" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:text-primary-300 transition-colors">crontab.guru</a> for help creating cron expressions
               </p>
             </div>
           )}
@@ -152,7 +151,7 @@ export function RecurrenceSelector({
 
       {/* Info Text */}
       {recurrenceType && recurrenceType !== 'custom' && (
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-dark-400">
           This task will be automatically recreated based on the selected schedule
         </p>
       )}

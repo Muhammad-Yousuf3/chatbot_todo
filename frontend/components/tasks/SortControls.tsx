@@ -3,6 +3,7 @@
 /**
  * SortControls Component
  * Feature: 010-ui-enablement
+ * Updated: 011-midnight-glass-ui - Glass dropdown with accent highlights
  *
  * Provides dropdown for sort field selection and toggle for sort order.
  * Supports sorting by: due_date, priority, title, created_at
@@ -36,16 +37,16 @@ export function SortControls({
 }: SortControlsProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-sm text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
+      <span className="text-sm text-dark-300 font-medium whitespace-nowrap">
         Sort by:
       </span>
 
-      {/* Sort Field Dropdown */}
+      {/* Sort Field Dropdown - Glass styling */}
       <select
         aria-label="Sort field"
         value={sortBy}
         onChange={(e) => onSortByChange(e.target.value as SortField)}
-        className="px-3 py-1.5 border border-slate-300 dark:border-dark-600 rounded-lg text-sm text-slate-800 dark:text-white dark:bg-dark-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+        className="px-3 py-1.5 input-glass cursor-pointer"
       >
         {Object.entries(sortFieldLabels).map(([value, label]) => (
           <option key={value} value={value}>
@@ -54,11 +55,16 @@ export function SortControls({
         ))}
       </select>
 
-      {/* Sort Order Toggle */}
+      {/* Sort Order Toggle - Accent highlight */}
       <button
         type="button"
         onClick={() => onSortOrderChange(sortOrder === 'asc' ? 'desc' : 'asc')}
-        className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
+        className={cn(
+          'p-1.5 rounded-lg transition-all duration-200',
+          'text-dark-300 hover:text-primary-400',
+          'hover:bg-primary-400/10 hover:shadow-glow',
+          'focus:outline-none focus:ring-2 focus:ring-primary-400/50'
+        )}
         aria-label={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
         title={`Currently: ${sortOrder === 'asc' ? 'Ascending' : 'Descending'}`}
       >

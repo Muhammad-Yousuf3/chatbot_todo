@@ -3,6 +3,7 @@
 /**
  * Chat Page - AI Agent Chat Interface
  * Feature: 006-frontend-chat-ui
+ * Updated: 011-midnight-glass-ui - Glass container styling
  *
  * Full-screen chat interface for conversational task management.
  * Protected route - requires authentication.
@@ -41,7 +42,7 @@ function ChatPageContent() {
     <ProtectedRoute>
       <div className="flex flex-col h-[calc(100vh-8rem)]">
         <Container className="flex-1 py-4 flex flex-col">
-          <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="flex-1 glass rounded-xl overflow-hidden">
             <ChatContainer
               conversationId={conversationId}
               onConversationCreated={handleConversationCreated}
@@ -57,7 +58,7 @@ function ChatLoadingFallback() {
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
       <Container className="flex-1 py-4 flex flex-col">
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-4">
+        <div className="flex-1 glass rounded-xl overflow-hidden p-4">
           <div className="flex flex-col h-full">
             <div className="flex-1 space-y-4">
               <Skeleton className="h-16 w-3/4" />

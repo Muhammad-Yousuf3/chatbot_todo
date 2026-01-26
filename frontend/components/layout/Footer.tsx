@@ -3,21 +3,22 @@
 /**
  * Footer Component with GitHub link
  * Feature: 006-frontend-chat-ui
+ * Updated: 011-midnight-glass-ui - Glass footer with accent links
  */
 
 import React from 'react';
 
 export function Footer() {
   return (
-    <footer className="border-t border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 transition-colors">
+    <footer className="border-t border-dark-600 glass transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Project Info */}
           <div className="text-center sm:text-left">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <p className="text-sm font-medium text-dark-100">
               AI Todo Agent
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-500">
+            <p className="text-xs text-dark-400">
               Built for Hackathon 2026
             </p>
           </div>
@@ -28,7 +29,7 @@ export function Footer() {
               href="https://github.com/Muhammad-Yousuf3/chatbot_todo"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
+              className="flex items-center gap-2 text-sm text-dark-300 hover:text-primary-400 transition-colors duration-200"
               aria-label="View project on GitHub"
             >
               <svg

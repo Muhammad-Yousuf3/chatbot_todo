@@ -3,6 +3,7 @@
 /**
  * Landing Page - Hero Section with CTA
  * Feature: 006-frontend-chat-ui
+ * Updated: 011-midnight-glass-ui - Glass effects and accent gradient
  *
  * First impression for hackathon judges.
  * Explains product purpose within 10 seconds.
@@ -25,11 +26,11 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="flex-1 flex items-center justify-center px-4">
         <Container className="text-center">
-          {/* Icon */}
+          {/* Icon - Glass with glow */}
           <div className="mb-8 flex justify-center">
-            <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900/50 rounded-2xl flex items-center justify-center">
+            <div className="w-20 h-20 glass rounded-2xl flex items-center justify-center shadow-glow">
               <svg
-                className="w-10 h-10 text-primary-600 dark:text-primary-400"
+                className="w-10 h-10 text-primary-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -44,14 +45,14 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white mb-6">
+          {/* Headline - Gradient accent */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-dark-50 mb-6">
             Manage Tasks with{' '}
-            <span className="text-primary-600 dark:text-primary-400">Natural Language</span>
+            <span className="bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">Natural Language</span>
           </h1>
 
           {/* Description */}
-          <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mb-10">
+          <p className="text-lg sm:text-xl text-dark-300 max-w-2xl mx-auto mb-10">
             An AI-powered assistant that understands your requests and manages your todo list.
             Just type what you need, and let the agent handle the rest.
           </p>
@@ -64,7 +65,7 @@ export default function LandingPage() {
           </Link>
 
           {/* Sub-text */}
-          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-4 text-sm text-dark-400">
             {isAuthenticated
               ? 'Continue to your conversations'
               : 'No account required to try'}
@@ -72,15 +73,15 @@ export default function LandingPage() {
         </Container>
       </section>
 
-      {/* Features Section - Brief overview */}
-      <section className="py-16 bg-slate-50 dark:bg-dark-800">
+      {/* Features Section - Glass cards */}
+      <section className="py-16 glass-subtle">
         <Container>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
             {/* Feature 1 */}
-            <div className="p-6">
-              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/50 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <div className="p-6 glass rounded-xl card-hover">
+              <div className="w-12 h-12 glass rounded-lg flex items-center justify-center mx-auto mb-4">
                 <svg
-                  className="w-6 h-6 text-primary-600 dark:text-primary-400"
+                  className="w-6 h-6 text-primary-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -93,19 +94,19 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+              <h3 className="text-lg font-semibold text-dark-50 mb-2">
                 Natural Conversation
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <p className="text-dark-400 text-sm">
                 Just type what you want. No need to learn commands or syntax.
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="p-6">
-              <div className="w-12 h-12 bg-success-100 dark:bg-success-900/50 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <div className="p-6 glass rounded-xl card-hover">
+              <div className="w-12 h-12 glass rounded-lg flex items-center justify-center mx-auto mb-4">
                 <svg
-                  className="w-6 h-6 text-success-600 dark:text-success-400"
+                  className="w-6 h-6 text-success-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -118,19 +119,19 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+              <h3 className="text-lg font-semibold text-dark-50 mb-2">
                 Smart Task Management
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <p className="text-dark-400 text-sm">
                 Add, complete, and organize tasks with simple requests.
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="p-6">
-              <div className="w-12 h-12 bg-warning-100 dark:bg-warning-900/50 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <div className="p-6 glass rounded-xl card-hover">
+              <div className="w-12 h-12 glass rounded-lg flex items-center justify-center mx-auto mb-4">
                 <svg
-                  className="w-6 h-6 text-warning-600 dark:text-warning-400"
+                  className="w-6 h-6 text-warning-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -143,10 +144,10 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+              <h3 className="text-lg font-semibold text-dark-50 mb-2">
                 Intelligent Agent
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <p className="text-dark-400 text-sm">
                 Powered by AI that understands context and learns from interactions.
               </p>
             </div>

@@ -3,20 +3,23 @@
 /**
  * Card Component
  * Feature: 006-frontend-chat-ui
+ * Updated: 011-midnight-glass-ui - Added glass variant and hover effect
  */
 
 import React, { HTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'bordered' | 'elevated';
+  variant?: 'default' | 'bordered' | 'elevated' | 'glass';
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  hover?: boolean;
 }
 
 const variantStyles = {
   default: 'bg-white dark:bg-dark-800',
-  bordered: 'bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700',
+  bordered: 'bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-600',
   elevated: 'bg-white dark:bg-dark-800 shadow-lg dark:shadow-dark-900/50',
+  glass: 'glass rounded-xl',
 };
 
 const paddingStyles = {
@@ -31,6 +34,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     {
       variant = 'bordered',
       padding = 'md',
+      hover = false,
       className,
       children,
       ...props
@@ -44,6 +48,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           'rounded-lg',
           variantStyles[variant],
           paddingStyles[padding],
+          hover && 'card-hover cursor-pointer',
           className
         )}
         {...props}
@@ -81,7 +86,7 @@ export const CardTitle = forwardRef<HTMLHeadingElement, CardTitleProps>(
     return (
       <h3
         ref={ref}
-        className={cn('text-lg font-semibold text-slate-800 dark:text-white', className)}
+        className={cn('text-lg font-semibold text-slate-800 dark:text-dark-50', className)}
         {...props}
       >
         {children}
@@ -99,7 +104,7 @@ export const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
     return (
       <div
         ref={ref}
-        className={cn('text-slate-600 dark:text-slate-400', className)}
+        className={cn('text-slate-600 dark:text-dark-400', className)}
         {...props}
       >
         {children}

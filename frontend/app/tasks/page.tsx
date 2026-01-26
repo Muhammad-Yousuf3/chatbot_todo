@@ -3,6 +3,7 @@
 /**
  * Tasks Page - View and Manage Tasks
  * Feature: 006-frontend-chat-ui
+ * Updated: 011-midnight-glass-ui - Glass cards, priority badges, enhanced forms
  *
  * Displays all tasks created by the chatbot with options to
  * complete, uncomplete, edit, and delete tasks.
@@ -27,6 +28,22 @@ import type { Task, TaskStatus, TaskPriority, TaskCreateRequest, RecurrenceType,
 import { cn, formatDate, validateTaskForm } from '@/lib/utils';
 
 type FilterStatus = 'all' | TaskStatus;
+
+// Priority Badge Component - Midnight Glass theme
+function PriorityBadge({ priority }: { priority: TaskPriority }) {
+  return (
+    <span
+      className={cn(
+        'px-2 py-0.5 text-xs font-semibold rounded-full',
+        priority === 'high' && 'priority-high',
+        priority === 'medium' && 'priority-medium',
+        priority === 'low' && 'priority-low'
+      )}
+    >
+      {priority.charAt(0).toUpperCase() + priority.slice(1)}
+    </span>
+  );
+}
 
 function formatDueDate(dateStr: string | null): string | null {
   if (!dateStr) return null;
@@ -69,7 +86,7 @@ function formatDueDate(dateStr: string | null): string | null {
 }
 
 function getDueDateStyle(dateStr: string | null, isCompleted: boolean): string {
-  if (!dateStr || isCompleted) return 'text-slate-400 dark:text-slate-500';
+  if (!dateStr || isCompleted) return 'text-dark-400';
   const date = new Date(dateStr);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -79,11 +96,11 @@ function getDueDateStyle(dateStr: string | null, isCompleted: boolean): string {
   const diffDays = Math.ceil((dueDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
-    return 'text-error-500 dark:text-error-400 font-medium';
+    return 'text-error-400 font-medium';
   } else if (diffDays <= 1) {
-    return 'text-warning-500 dark:text-warning-400 font-medium';
+    return 'text-warning-400 font-medium';
   }
-  return 'text-slate-400 dark:text-slate-500';
+  return 'text-dark-400';
 }
 
 function TaskItem({
@@ -138,23 +155,29 @@ function TaskItem({
   const dueDateText = formatDueDate(task.due_date);
   const dueDateStyle = getDueDateStyle(task.due_date, isCompleted);
 
+  // Limit displayed tags
+  const displayedTags = task.tags.slice(0, 3);
+  const hiddenTagCount = task.tags.length - 3;
+
   return (
-    <div className={cn(
-      'group p-4 rounded-xl border transition-all duration-200',
-      isCompleted
-        ? 'bg-slate-50 dark:bg-dark-800/50 border-slate-200 dark:border-dark-700'
-        : 'bg-white dark:bg-dark-800 border-slate-200 dark:border-dark-700 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-sm'
-    )}>
-      <div className="flex items-start gap-3">
-        {/* Checkbox */}
+    <Card
+      variant="glass"
+      hover={!isCompleted}
+      className={cn(
+        'group transition-all duration-200',
+        isCompleted && 'opacity-70'
+      )}
+    >
+      <div className="flex items-start gap-4">
+        {/* Checkbox - Accent styled */}
         <button
           onClick={() => isCompleted ? onUncomplete(task.id) : onComplete(task.id)}
           disabled={isUpdating}
           className={cn(
-            'mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0',
+            'mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0',
             isCompleted
               ? 'bg-success-500 border-success-500 text-white'
-              : 'border-slate-300 hover:border-primary-500',
+              : 'border-primary-400/50 hover:border-primary-400 hover:shadow-glow',
             isUpdating && 'opacity-50 cursor-not-allowed'
           )}
           aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
@@ -169,13 +192,13 @@ function TaskItem({
         {/* Task Content */}
         <div className="flex-1 min-w-0">
           {isEditing ? (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               <input
                 type="text"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 placeholder="Task title"
-                className="w-full px-3 py-2 border border-slate-300 dark:border-dark-600 rounded-lg text-slate-800 dark:text-white dark:bg-dark-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="input-glass w-full"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) handleSaveEdit();
@@ -188,13 +211,13 @@ function TaskItem({
                 placeholder="Description (optional)"
                 rows={3}
                 maxLength={2000}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-dark-600 rounded-lg text-slate-800 dark:text-white dark:bg-dark-700 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y"
+                className="input-glass w-full resize-y"
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') handleCancelEdit();
                 }}
               />
               <div className="flex items-center justify-between">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-dark-400">
                   {editDescription.length}/2000
                 </p>
                 <div className="flex gap-2">
@@ -205,78 +228,87 @@ function TaskItem({
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2 mb-1">
-                <p className={cn(
-                  'text-slate-800 dark:text-slate-200 break-words font-medium',
-                  isCompleted && 'line-through text-slate-500 dark:text-slate-500'
-                )}>
+              {/* Title and Priority */}
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <h3
+                  className={cn(
+                    'text-dark-50 font-medium break-words',
+                    isCompleted && 'line-through text-dark-400'
+                  )}
+                  title={task.title}
+                >
                   {task.title}
-                </p>
-                {task.priority !== 'medium' && (
-                  <span className={cn(
-                    'px-1.5 py-0.5 text-xs font-medium rounded',
-                    task.priority === 'high'
-                      ? 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400'
-                      : 'bg-slate-100 text-slate-600 dark:bg-dark-700 dark:text-slate-400'
-                  )}>
-                    {task.priority}
-                  </span>
-                )}
+                </h3>
+                <PriorityBadge priority={task.priority} />
               </div>
+
+              {/* Description - Truncated */}
               {task.description && (
                 <p className={cn(
-                  'text-sm text-slate-600 dark:text-slate-400 mb-1',
-                  isCompleted && 'line-through text-slate-500 dark:text-slate-500'
+                  'text-sm text-dark-300 mb-2 line-clamp-2',
+                  isCompleted && 'line-through text-dark-500'
                 )}>
                   {task.description}
                 </p>
               )}
+
+              {/* Tags - Accent gradient chips */}
               {task.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {task.tags.map((tag, idx) => (
-                    <span key={idx} className="px-2 py-0.5 text-xs bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 rounded-full">
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {displayedTags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 text-xs font-medium bg-accent-gradient text-white rounded-full"
+                    >
                       #{tag}
                     </span>
                   ))}
+                  {hiddenTagCount > 0 && (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-dark-700 text-dark-300 rounded-full">
+                      +{hiddenTagCount} more
+                    </span>
+                  )}
                 </div>
               )}
-              <div className="flex flex-wrap items-center gap-2 mt-1">
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+
+              {/* Metadata row */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                <span className="text-dark-400">
                   Created {formatDate(task.created_at)}
-                  {task.completed_at && ` • Completed ${formatDate(task.completed_at)}`}
-                </p>
+                </span>
+                {task.completed_at && (
+                  <span className="text-dark-400">
+                    • Completed {formatDate(task.completed_at)}
+                  </span>
+                )}
                 {dueDateText && (
-                  <>
-                    <span className="text-xs text-slate-300 dark:text-slate-600">•</span>
-                    <p className={cn('text-xs flex items-center gap-1', dueDateStyle)}>
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {dueDateText}
-                    </p>
-                  </>
+                  <span className={cn('flex items-center gap-1', dueDateStyle)}>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {dueDateText}
+                  </span>
                 )}
+                {/* Recurrence indicator */}
                 {task.recurrence && (
-                  <>
-                    <span className="text-xs text-slate-300 dark:text-slate-600">•</span>
-                    <p className="text-xs flex items-center gap-1 text-primary-500 dark:text-primary-400">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      {task.recurrence.recurrence_type}
-                    </p>
-                  </>
+                  <span className="flex items-center gap-1 text-primary-400">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Recurring: {task.recurrence.recurrence_type}
+                  </span>
                 )}
+                {/* Reminder indicator with tooltip */}
                 {task.reminders.length > 0 && (
-                  <>
-                    <span className="text-xs text-slate-300 dark:text-slate-600">•</span>
-                    <p className="text-xs flex items-center gap-1 text-warning-500 dark:text-warning-400">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                      </svg>
-                      {task.reminders.length} reminder{task.reminders.length > 1 ? 's' : ''}
-                    </p>
-                  </>
+                  <span
+                    className="flex items-center gap-1 text-warning-400"
+                    title={`${task.reminders.length} reminder${task.reminders.length > 1 ? 's' : ''} scheduled`}
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    {task.reminders.length}
+                  </span>
                 )}
               </div>
             </>
@@ -290,7 +322,7 @@ function TaskItem({
               <button
                 onClick={() => setIsEditing(true)}
                 disabled={isUpdating}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-dark-600 rounded-lg transition-colors"
+                className="p-2 text-dark-400 hover:text-primary-400 hover:bg-dark-700/50 rounded-lg transition-colors"
                 aria-label="Edit task"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -309,7 +341,7 @@ function TaskItem({
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="px-2 py-1 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-600 rounded transition-colors"
+                  className="px-2 py-1 text-xs text-dark-300 hover:bg-dark-700/50 rounded transition-colors"
                 >
                   Cancel
                 </button>
@@ -318,7 +350,7 @@ function TaskItem({
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={isUpdating}
-                className="p-1.5 text-slate-400 hover:text-error-500 hover:bg-error-50 dark:hover:bg-error-900/20 rounded-lg transition-colors"
+                className="p-2 text-dark-400 hover:text-error-400 hover:bg-error-500/10 rounded-lg transition-colors"
                 aria-label="Delete task"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -329,7 +361,7 @@ function TaskItem({
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -510,23 +542,23 @@ function TasksContent() {
       <Container className="max-w-3xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">My Tasks</h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-2">
+          <h1 className="text-3xl font-bold text-dark-50">My Tasks</h1>
+          <p className="text-dark-400 mt-2">
             Manage tasks created through your AI assistant
-            <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
+            <span className="ml-2 text-xs text-dark-500">
               (Tip: Press Ctrl+K to focus on task input)
             </span>
           </p>
         </div>
 
-        {/* Add Task Form */}
-        <Card className="p-4 sm:p-6 mb-6">
-          <form onSubmit={handleCreateTask} className="space-y-3" aria-label="Create new task">
+        {/* Add Task Form - Glass Panel */}
+        <Card variant="glass" className="p-4 sm:p-6 mb-6">
+          <form onSubmit={handleCreateTask} className="space-y-4" aria-label="Create new task">
             {/* Validation Errors */}
             {Object.keys(validationErrors).length > 0 && (
-              <div className="p-3 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg">
-                <p className="text-sm font-medium text-error-700 dark:text-error-400 mb-1">Please fix the following errors:</p>
-                <ul className="text-sm text-error-600 dark:text-error-400 list-disc list-inside space-y-0.5">
+              <div className="p-3 glass-subtle border-error-500/30 rounded-lg">
+                <p className="text-sm font-medium text-error-400 mb-1">Please fix the following errors:</p>
+                <ul className="text-sm text-error-300 list-disc list-inside space-y-0.5">
                   {Object.entries(validationErrors).map(([field, error]) => (
                     <li key={field}>{error}</li>
                   ))}
@@ -534,7 +566,7 @@ function TasksContent() {
               </div>
             )}
 
-            {/* Title Input */}
+            {/* Title Input - Glass styled */}
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
@@ -542,8 +574,8 @@ function TasksContent() {
                 onChange={(e) => setNewTaskText(e.target.value)}
                 placeholder="Add a new task (task title)..."
                 className={cn(
-                  "flex-1 px-4 py-2.5 border rounded-lg text-slate-800 dark:text-white dark:bg-dark-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500",
-                  validationErrors.title ? 'border-error-500 dark:border-error-500' : 'border-slate-300 dark:border-dark-600'
+                  "input-glass flex-1",
+                  validationErrors.title && 'border-error-500'
                 )}
                 disabled={isCreating}
                 aria-label="Task title"
@@ -561,9 +593,9 @@ function TasksContent() {
               </Button>
             </div>
 
-            {/* Description Textarea */}
+            {/* Description Textarea - Glass styled */}
             <div>
-              <label htmlFor="task-description" className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-2 block">
+              <label htmlFor="task-description" className="text-sm text-dark-300 font-medium mb-2 block">
                 Description (optional):
               </label>
               <textarea
@@ -574,31 +606,31 @@ function TasksContent() {
                 rows={3}
                 maxLength={2000}
                 className={cn(
-                  "w-full px-3 py-2 border rounded-lg text-slate-800 dark:text-white dark:bg-dark-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 resize-y",
-                  validationErrors.description ? 'border-error-500 dark:border-error-500' : 'border-slate-300 dark:border-dark-600'
+                  "input-glass w-full resize-y",
+                  validationErrors.description && 'border-error-500'
                 )}
                 disabled={isCreating}
               />
               <div className="flex justify-between items-center mt-1">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-dark-500">
                   Supports line breaks and special characters
                 </p>
                 <p className={cn(
                   "text-xs",
                   newTaskDescription.length > 1900
-                    ? "text-warning-600 dark:text-warning-400 font-medium"
+                    ? "text-warning-400 font-medium"
                     : newTaskDescription.length === 2000
-                    ? "text-error-600 dark:text-error-400 font-medium"
-                    : "text-slate-500 dark:text-slate-400"
+                    ? "text-error-400 font-medium"
+                    : "text-dark-500"
                 )}>
                   {newTaskDescription.length}/2000
                 </p>
               </div>
             </div>
 
-            {/* Priority Selector */}
+            {/* Priority Selector - Glass buttons with gradient accent */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-              <label className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+              <label className="text-sm text-dark-300 font-medium">
                 Priority:
               </label>
               <div className="flex gap-2 flex-wrap">
@@ -609,14 +641,14 @@ function TasksContent() {
                     onClick={() => setNewTaskPriority(priority)}
                     disabled={isCreating}
                     className={cn(
-                      'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors border',
+                      'px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 border',
                       newTaskPriority === priority
                         ? priority === 'high'
-                          ? 'bg-error-100 text-error-700 border-error-300 dark:bg-error-900/30 dark:text-error-400 dark:border-error-700'
+                          ? 'bg-error-500 text-white border-error-500'
                           : priority === 'low'
-                          ? 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-dark-700 dark:text-slate-300 dark:border-dark-600'
-                          : 'bg-primary-100 text-primary-700 border-primary-300 dark:bg-primary-900/30 dark:text-primary-400 dark:border-primary-700'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-dark-800 dark:text-slate-400 dark:border-dark-600 dark:hover:bg-dark-700',
+                          ? 'bg-success-500 text-white border-success-500'
+                          : 'bg-accent-gradient text-white border-primary-500'
+                        : 'glass-subtle border-dark-600 text-dark-300 hover:border-dark-500',
                       isCreating && 'opacity-50 cursor-not-allowed'
                     )}
                   >
@@ -628,7 +660,7 @@ function TasksContent() {
 
             {/* Tags Input */}
             <div>
-              <label className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-2 block">
+              <label className="text-sm text-dark-300 font-medium mb-2 block">
                 Tags (optional):
               </label>
               <TagInput
@@ -650,12 +682,12 @@ function TasksContent() {
             />
 
             {/* Advanced Options Toggle */}
-            <div className="pt-2 border-t border-slate-200 dark:border-dark-700">
+            <div className="pt-3 border-t border-dark-600">
               <button
                 type="button"
                 onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
                 disabled={isCreating}
-                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-colors"
+                className="flex items-center gap-2 text-sm text-dark-300 hover:text-primary-400 font-medium transition-colors"
               >
                 <svg
                   className={cn(
@@ -670,7 +702,7 @@ function TasksContent() {
                 </svg>
                 Advanced Options
                 {(recurrenceType || reminders.length > 0) && (
-                  <span className="px-2 py-0.5 text-xs bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 rounded-full">
+                  <span className="px-2 py-0.5 text-xs bg-accent-gradient text-white rounded-full">
                     {[recurrenceType && 'Recurrence', reminders.length > 0 && `${reminders.length} reminder${reminders.length > 1 ? 's' : ''}`].filter(Boolean).join(', ')}
                   </span>
                 )}
@@ -679,7 +711,7 @@ function TasksContent() {
 
             {/* Advanced Options Section */}
             {showAdvancedOptions && (
-              <div className="space-y-4 p-4 bg-slate-50 dark:bg-dark-800/50 border border-slate-200 dark:border-dark-700 rounded-lg">
+              <div className="space-y-4 p-4 glass-subtle rounded-lg">
                 {/* Recurrence Selector */}
                 <RecurrenceSelector
                   recurrenceType={recurrenceType}
@@ -693,7 +725,7 @@ function TasksContent() {
                 />
 
                 {/* Reminder List */}
-                <div className="pt-4 border-t border-slate-200 dark:border-dark-700">
+                <div className="pt-4 border-t border-dark-600">
                   <ReminderList
                     reminders={reminders}
                     onChange={setReminders}
@@ -718,15 +750,15 @@ function TasksContent() {
                 aria-selected={filter === status}
                 aria-label={`Show ${status} tasks`}
                 className={cn(
-                  'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
                   filter === status
-                    ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-700'
+                    ? 'bg-accent-gradient text-white shadow-glow'
+                    : 'glass-subtle text-dark-300 hover:text-dark-100'
                 )}
               >
                 {status === 'all' ? 'All' : status === 'pending' ? 'Pending' : 'Completed'}
                 {status === 'all' && total > 0 && (
-                  <span className="ml-1.5 text-xs bg-slate-200 dark:bg-dark-600 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded-full">
+                  <span className="ml-1.5 text-xs bg-dark-700 text-dark-200 px-1.5 py-0.5 rounded-full">
                     {total}
                   </span>
                 )}
@@ -756,27 +788,28 @@ function TasksContent() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-error-50 border border-error-200 rounded-lg">
-            <p className="text-sm text-error-700">{error}</p>
+          <div className="mb-6 p-4 glass-subtle border-error-500/30 rounded-lg">
+            <p className="text-sm text-error-400">{error}</p>
             <button
               onClick={() => refresh()}
-              className="mt-2 text-sm text-error-600 hover:text-error-700 font-medium"
+              className="mt-2 text-sm text-primary-400 hover:text-primary-300 font-medium"
             >
               Try again
             </button>
           </div>
         )}
 
-        {/* Loading State */}
+        {/* Loading State - Glass skeletons */}
         {isLoading && (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="p-4 rounded-xl border border-slate-200 bg-white">
-                <div className="flex items-start gap-3">
-                  <Skeleton className="w-5 h-5 rounded-full" />
+              <div key={i} className="p-4 rounded-xl glass">
+                <div className="flex items-start gap-4">
+                  <Skeleton className="w-5 h-5 rounded-full bg-dark-600" />
                   <div className="flex-1">
-                    <Skeleton className="h-5 w-3/4 mb-2" />
-                    <Skeleton className="h-3 w-1/4" />
+                    <Skeleton className="h-5 w-3/4 mb-2 bg-dark-600" />
+                    <Skeleton className="h-3 w-1/2 mb-2 bg-dark-700" />
+                    <Skeleton className="h-3 w-1/4 bg-dark-700" />
                   </div>
                 </div>
               </div>
@@ -784,16 +817,16 @@ function TasksContent() {
           </div>
         )}
 
-        {/* Tasks List */}
+        {/* Empty State */}
         {!isLoading && tasks.length === 0 && (
-          <Card className="p-12 text-center">
-            <div className="w-16 h-16 bg-slate-100 dark:bg-dark-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <Card variant="glass" className="p-12 text-center">
+            <div className="w-16 h-16 bg-dark-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No tasks yet</h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-4">
+            <h3 className="text-lg font-semibold text-dark-50 mb-2">No tasks yet</h3>
+            <p className="text-dark-400 mb-4">
               {filter === 'all'
                 ? 'Ask your AI assistant to create tasks, or add one manually above.'
                 : filter === 'pending'
@@ -803,17 +836,18 @@ function TasksContent() {
           </Card>
         )}
 
+        {/* Tasks List */}
         {!isLoading && tasks.length > 0 && (
           <div className="space-y-6">
             {/* Pending Tasks */}
             {filter !== 'completed' && pendingTasks.length > 0 && (
               <div>
                 {filter === 'all' && (
-                  <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">
+                  <h2 className="text-sm font-semibold text-dark-400 uppercase tracking-wide mb-3">
                     Pending ({pendingTasks.length})
                   </h2>
                 )}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {pendingTasks.map((task) => (
                     <TaskItem
                       key={task.id}
@@ -834,11 +868,11 @@ function TasksContent() {
             {filter !== 'pending' && completedTasks.length > 0 && (
               <div>
                 {filter === 'all' && (
-                  <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">
+                  <h2 className="text-sm font-semibold text-dark-400 uppercase tracking-wide mb-3">
                     Completed ({completedTasks.length})
                   </h2>
                 )}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {completedTasks.map((task) => (
                     <TaskItem
                       key={task.id}
@@ -876,7 +910,7 @@ export default function TasksPage() {
     <ProtectedRoute>
       <Suspense fallback={
         <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-400" />
         </div>
       }>
         <TasksContent />
